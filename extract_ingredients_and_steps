@@ -1,0 +1,24 @@
+#I need urllib.request to pull the info from the website
+import urllib
+import urllib.request
+
+from bs4 import BeautifulSoup
+
+#this creates the soup for the webpage
+html_doc = urllib.request.urlopen('https://www.allrecipes.com/recipe/259356/roast-chicken-with-skillet-stuffing/')
+soup = BeautifulSoup(html_doc, 'html.parser')
+
+#All Ingredients have the class: ingredients-item-name
+spans_ingredients = soup.find_all('span',{'class':'ingredients-item-name'})
+ingredients = []
+for span in spans_ingredients:
+        ingredients.append(span.text)
+print(ingredients)
+
+#All steps and recommendations have the class:paragraph
+steps = []
+find_steps = soup.find_all('div', {'class':'paragraph'})
+for div in find_steps:
+    steps.append(div.text)
+print(steps)
+

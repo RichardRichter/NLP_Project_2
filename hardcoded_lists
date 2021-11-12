@@ -1,0 +1,3 @@
+volume_measurements = ['teaspoon', 't', 'tsp.', 'tablespoon', 'T', 'tbl.', 'tbs.', 'tbsp.', 'fluid ounce', 'fl oz', 'gill', 'cup', 'c', 'pint', 'p', 'pt', 'fl pt', 'quart', 'q', 'qt', 'fl qt', 'gallon', 'g' 'gal', 'ml', 'milliliter', 'millilitre', 'cc', 'mL', 'l', 'liter', 'litre', 'L', 'dl', 'deciliter', 'decilitre', 'dL']
+mass_measurements = ['pound', 'lb', '#', 'ounce', 'oz', 'mg', 'milligram', 'milligramme', 'g', 'gram', 'gramme', 'kg', 'kilogram', 'kilogramme']
+length_measurements = ['mm', 'millimeter', 'millimetre', 'cm', 'centimeter', 'cenimetre', 'm', 'meter', 'metre', 'inch', 'in', '\"']

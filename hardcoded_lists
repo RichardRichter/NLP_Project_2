@@ -13,4 +13,4 @@ protiens = ['chicken']
 herbs = ['salt', 'pepper']
 binders = ['egg']
 cooking_mediums = ['olive oil']
-
+non_vegetarian = []

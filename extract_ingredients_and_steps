@@ -40,3 +40,7 @@ if 'vegetarian' in self.tags:
     self.isVegetarian = True
 if 'japanese' in self.tags:
     self.isJapanese = True
+
+html_title = soup.find('title')
+if ' | Allrecipes' in html_title.text:
+    title = html_title.text[:-13]

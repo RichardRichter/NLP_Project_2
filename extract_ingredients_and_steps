@@ -22,3 +22,21 @@ for div in find_steps:
     steps.append(div.text)
 print(steps)
 
+find_tag_list = soup.find('script', id='karma-loader')
+find_tag_list = str(find_tag_list).split()
+append_to_list = False
+self.tags = []
+for item in find_tag_list:
+    item = item.replace('"','')
+    item = item.replace(',','')
+    if append_to_list and '[' not in item:  
+        if ']' in item:
+            break
+        self.tags.append(item)
+    if 'tags:' == item:
+        append_to_list = True
+print(self.tags)
+if 'vegetarian' in self.tags:
+    self.isVegetarian = True
+if 'japanese' in self.tags:
+    self.isJapanese = True

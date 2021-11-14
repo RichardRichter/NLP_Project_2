@@ -1,0 +1,16 @@
+import nltk
+text = 'Cook and stir until softened, until about 10 minutes'
+tokens = nltk.word_tokenize(text)
+#print(tokens)
+tag = nltk.pos_tag(tokens)
+print(tag)
+grammar = r"""
+Noun_Phrase:{<DT>?<JJ>*(<NN>|<NNS>)*(<NN>|<NNS>)}
+    {<CD>*<NNS>}
+    {<NN>*<NN>}
+    
+"""
+cp = nltk.RegexpParser(grammar)
+result = cp.parse(tag)
+print(result)
+result.draw()

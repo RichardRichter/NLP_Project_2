@@ -1,5 +1,7 @@
 from bs4 import BeautifulSoup as bs
 from urllib import request
+from data import *
+import requests
 import unicodedata
 import re
 
@@ -23,19 +25,31 @@ class Recipe():
 		ingredients = {}
 		unknown = {}
 		for string in ingredient_strings:
-			ingredient = {}
+			ingredient = {'descriptors': []}
+
+			# Parsing out descriptors in parentheses
+			parens = re.search(r'(\(.*\))', string)
+			if parens:
+				for paren in parens.groups():
+					ingredient['descriptors'].append(paren[1:-1])
+					string = string.replace(paren, '')
+					string = string.replace('  ', ' ')
 
 			# Determining if the ingredient has 'prep steps'
 			string = string.split(',')
+			ingredient['prep'] = []
 			if len(string) > 1:
-				ingredient['prep'] = string[1].strip()
-			else:
-				ingredient['prep'] = ''
+				ingredient['prep'] = [string[1].strip()]
 
 			# Determining if the ingredient has an explicit quantity
 			string = string[0].split()
 			has_quantity = False
 			for i, word in enumerate(string):
+
+				# Catching more preparatory steps
+				if word.endswith('ed'):
+					ingredient['prep'].append(word)
+					string[i] = None
 
 				# Replacing 'A and a' with 1
 				if word.lower() == 'a':
@@ -50,6 +64,9 @@ class Recipe():
 				except ValueError:
 					continue
 
+			# Removing null words that were added as prep
+			string = [x for x in string if x is not None]
+
 			# If the string has an explicit quanity
 			if has_quantity:
 				if len(string) == 1:
@@ -61,14 +78,16 @@ class Recipe():
 				else:
 					ingredient['quantity'] = string[0]
 					ingredient['measurement'] = string[1]
-					ingredient['name'] = ' '.join(string[2:])
+					ingredient['name'] = ' '.join([str(x) for x in string[2:]])
 
 			# Special cases where there is no quantity
 			else:
 				ingredient['name'] = ' '.join(string)
 				unknown[ingredient['name']] = ingredient
 
-			ingredients[ingredient['name']] = ingredient
+
+			# After constructing the ingredient, we want to validate them before entering them into the ingredients list
+			ingredients[ingredient['name']] = self.validate(ingredient)
 
 		return ingredients, unknown
 
@@ -79,8 +98,17 @@ class Recipe():
 			return sum([self.convert_fraction(c) for c in string_fraction])
 
 
-url = 'https://www.allrecipes.com/recipe/259356/roast-chicken-with-skillet-stuffing/'
+	def validate(self, ingredient):
 
-recipe = Recipe(url)
-print(recipe.unknown)
-print(u'1/2')
+
+
+
+def get_recipe_url(num=259356):
+	response = requests.get(f'https://www.allrecipes.com/recipe/{num}')
+	if response.status_code == 200:
+		return response.url
+	return get_recipe_url(259356)
+
+
+recipe = Recipe(get_recipe_url(20002))
+print(recipe.ingredients)

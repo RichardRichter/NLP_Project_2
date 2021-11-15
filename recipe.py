@@ -48,7 +48,7 @@ class Recipe():
 				phrases = self.clean_split(substep, [',', ';', 'until', 'and'])
 				for word in to_clean:
 					phrases = [phrase for phrase in phrases if word not in phrase]
-				substeps[i] = ' '.join(phrases)
+				substeps[i] = ', '.join(phrases)
 
 
 			step = '. '.join(substeps)
@@ -61,10 +61,10 @@ class Recipe():
 	def vegetarian(self):
 
 		# Words that will be used to clean substeps
-		meat_words = ['bone', 'bones', 'skin', 'blood', 'juice', 'juices', 'pink', 'meat', 'cavity']
+		meat_words = ['bone', 'bone', 'skin', 'blood', 'juice', 'juice', 'pink', 'meat', 'cavity']
 
 		# Cleaning the steps of those words
-		steps = self.clean_substeps(self.steps)
+		steps = self.clean_substeps(meat_words)
 
 		# Replacing chicken w/ tofu
 		for i, step in enumerate(steps):

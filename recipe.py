@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup as bs
 from urllib import request
+from functools import lru_cache
 from data import *
 import requests
 import unicodedata
@@ -17,6 +18,60 @@ class Recipe():
 		self.soup = bs(html_doc, 'html.parser')
 		self.ingredients, self.unknown = self.get_ingredients()
 		self.steps = [div.text for div in self.soup.find_all('div', {'class':'paragraph'})]
+
+
+	@staticmethod
+	def clean_split(string, seps):
+		result = [string]
+		for sep in seps:
+			new = result[:]
+			result = []
+			for phrase in new:
+				new_phrase = phrase.split(sep)
+				if sep.isalpha() and len(new_phrase) > 1:
+					new_phrase = [new_phrase[0]] + [sep + x for x in new_phrase[1:]]
+				result += new_phrase
+
+		if result[-1].strip() == 'or':
+			result = result[:-1]
+		return [x.strip() for x in result if x != ' ']
+
+
+	# Given a list of words, cleans substeps of phrases that contain those words
+	def clean_substeps(self, to_clean):
+
+		# Getting substeps
+		cleaned = []
+		for i, step in enumerate(self.steps):
+			substeps = step.split('.')
+			for i, substep in enumerate(substeps):
+				phrases = self.clean_split(substep, [',', ';', 'until', 'and'])
+				for word in to_clean:
+					phrases = [phrase for phrase in phrases if word not in phrase]
+				substeps[i] = ' '.join(phrases)
+
+
+			step = '. '.join(substeps)
+			cleaned.append(step[:-1])
+
+		return cleaned
+
+
+	# Outputs a vegetarian-ized version of the recipe
+	def vegetarian(self):
+
+		# Words that will be used to clean substeps
+		meat_words = ['bone', 'bones', 'skin', 'blood', 'juice', 'juices', 'pink', 'meat', 'cavity']
+
+		# Cleaning the steps of those words
+		steps = self.clean_substeps(self.steps)
+
+		# Replacing chicken w/ tofu
+		for i, step in enumerate(steps):
+			steps[i] = step.replace('chicken', 'tofu')
+
+		return steps
+
 
 
 	def get_ingredients(self):
@@ -176,9 +231,8 @@ def get_recipe_url(num=259356):
 	return get_recipe_url(259356)
 
 
-urls = [259356, 20002, 237496, 16318, 228285]
+urls = [9023, 259356, 20002, 237496, 16318, 228285]
 
-for url in urls:
+for url in urls[0:1]:
 	recipe = Recipe(get_recipe_url(url))
-	for x in recipe.ingredients.values(): print(x)
-	print()
+	print(recipe.vegetarian())

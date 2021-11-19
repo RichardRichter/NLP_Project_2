@@ -7,8 +7,11 @@ for ingredient in all_ingredients:
       replace with same weight but in tofu
     else
       replace with 12 ounce tofu
+ if cant find find
+    add 12 ounce tofu
       
 # from vegetarian to non
 if recipe is vegetarian
-   add boneless chicken thight as ingredients
-   add final step ("
+   add vegetable oil to ingredients if not there
+   add 1 16-ounce pack ground chicken as ingredients
+   add final step: Cover pan with thin layer of vegetable oil. Place ground chicken onto the pan and cook on stove over medium heat for 7 minutes or until brown.

@@ -1,0 +1,14 @@
+# to vegetarian
+for ingredient in all_ingredients:
+  if ingredient is non-vegetarian:
+    if ingredient measure type is discrete
+      replace with 12 ounce tofu
+    elif ingredient measure type is weight
+      replace with same weight but in tofu
+    else
+      replace with 12 ounce tofu
+      
+# from vegetarian to non
+if recipe is vegetarian
+   add boneless chicken thight as ingredients
+   add final step ("

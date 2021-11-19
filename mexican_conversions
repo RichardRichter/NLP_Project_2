@@ -1,0 +1,26 @@
+if non_dessert:
+  if food == sandwhich
+    make torta
+  if vegetarian:
+    add soy chorizo
+  elif slowcook == carnitas:
+  elif bake == chicken:
+  elif grill == al pastor:
+  else:
+    cook all other generics == carne asada
+  if sauce: 
+    make it mole
+  add salsa
+  add mexican rice
+  seasonings = add cilantro, chili powder, epazote, garlic
+  vegetables = add tomato's, onions, and bellpepper
+  if dairy(other than milk) = replace with queso fresco
+if dessert:
+  add cinnamon to seasoning
+  add rice pudding
+  if milk = specify goats milk
+  if fruits: 
+    add strawberry
+
+
+ 

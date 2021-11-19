@@ -8,7 +8,6 @@ size_measurements = ['small', 'medium', 'large', 'extra large', 'whole']
 
 nonstandard_measurements = ['can', 'stick', 'handful', 'dash', 'to|taste']
 
-breads = ['ciabatta', 'whole wheat bread', 'sourdough', 'rye bread', 'pita bread', 'focaccia', 'multigrain', 'brioche', 'bread', 'waffle', 'english muffin']
 measurements = volume_measurements + mass_measurements + length_measurements + size_measurements + nonstandard_measurements
 
 
@@ -31,8 +30,7 @@ seasonings = ['allspice','angelica','anise','asafoetida','bay leaf','basil','ber
 
 binders = ['egg', 'cracker', 'cracker crumb', 'oatmeal', 'rice', 'milk', 'evaporated milk', 'gelatin', 'guar gum', 'xanthan gum', 'psyllium husk', 'potato starch']
 
-
-starches = ['bread', 'dough', 'flour', 'pasta', 'noodle', 'pastry']
+starches = ['ciabatta', 'whole wheat bread', 'sourdough', 'rye bread', 'pita bread', 'focaccia', 'multigrain', 'brioche', 'bread', 'waffle', 'english muffin', 'dough', 'flour', 'pasta', 'noodle', 'pastry']
 
 
 ingredients_list = {

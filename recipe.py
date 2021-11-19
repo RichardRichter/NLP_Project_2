@@ -1,7 +1,8 @@
 from bs4 import BeautifulSoup as bs
 from urllib import request
 from functools import lru_cache
-from data import *
+from transformers import pipeline
+import data
 import requests
 import unicodedata
 import re
@@ -10,14 +11,117 @@ import spacy
 # Loading spacy
 nlp = spacy.load("en_core_web_sm")
 
+# Query and Generation pipelines
+query = pipeline('question-answering')
+
 # Class representing a recipe
 class Recipe():
+
+	# Class representing a node in a step graph
+	class Step():
+		
+		def __init__(self, sentence):
+			self.text = sentence
+			self.tokens = nlp(sentence)
+			self.actions, self.ingredients, self.tools, self.valid = self.get_info()
+			self.conditions = None
+
+		def __str__(self):
+			return f'({self.actions} the {self.ingredients} using {self.tools})'
+
+		def __repr__(self):
+			return str(self)
+
+		# Filling step info
+		def get_info(self):
+
+			# Getting items from data, then querying for missing items
+			actions, ingredients, tools = self.from_data()
+			actions, ingredients, tools = self.query(actions, ingredients, tools)
+
+			
+			valid = True if (actions and (ingredients or tools)) else False
+
+			return actions, ingredients, tools, valid
+
+		# Grabbing potential data from hardcoded lists
+		def from_data(self):
+			# Getting actions
+			actions = [w.text for w in self.tokens if w.lemma_ in data.cooking_methods]
+
+			# Getting ingredients
+			ingredients = [w.text for w in self.tokens if w.lemma_ in data.all_ingredients]
+
+			# Getting tools
+			tools = [w.text for w in self.tokens if w.lemma_ in data.tools]
+
+			return actions, ingredients, tools
+
+		# Finding more data with queries
+		def query(self, actions, ingredients, tools):
+
+			# Given a question as a string, returns an answer and a confidence in that answer
+			def answer(question):
+				qdict =  {
+					'question': question,
+					'context': self.text
+				}
+
+				return query(qdict)['answer'], query(qdict)['score']
+
+
+			def append_answer(l, question, threshold=0):
+				item, confidence = answer(question)
+				if confidence > threshold and len(item.split()) < 4:
+					l.append((item, confidence))
+
+
+			# Querying actions
+			if not actions:
+
+				# Querying using ingredients
+				for ingredient in ingredients:
+					question = f'do what with {ingredient}?'
+					append_answer(actions, question)
+
+				# Querying using tools
+				for tool in tools:
+					question = f'do what with {tool}?'
+					append_answer(actions, question)
+
+			# Deleting duplicates
+			actions = list(set(actions))
+
+
+			# Querying ingredients
+			if not ingredients:
+
+				for action in actions:
+					question = f'{action} what?'
+					append_answer(ingredients, question)
+
+			ingredients = list(set(ingredients))
+
+
+			# Querying tools
+			if not tools:
+
+				for action in actions:
+					for ingredient in ingredients:
+						question = f'{action} {ingredient} in a what?'
+						append_answer(tools, question)
+
+			tools = list(set(tools))
+
+			return actions, ingredients, tools
+
 
 	def __init__(self, url):
 		html_doc = request.urlopen(url)
 		self.soup = bs(html_doc, 'html.parser')
 		self.ingredients, self.unknown = self.get_ingredients()
-		self.steps = [div.text for div in self.soup.find_all('div', {'class':'paragraph'})]
+		self.text = [div.text for div in self.soup.find_all('div', {'class':'paragraph'})]
+		self.steps = self.get_steps()
 
 
 	@staticmethod
@@ -55,23 +159,6 @@ class Recipe():
 			cleaned.append(step[:-1])
 
 		return cleaned
-
-
-	# Outputs a vegetarian-ized version of the recipe
-	def vegetarian(self):
-
-		# Words that will be used to clean substeps
-		meat_words = ['bone', 'bone', 'skin', 'blood', 'juice', 'juice', 'pink', 'meat', 'cavity']
-
-		# Cleaning the steps of those words
-		steps = self.clean_substeps(meat_words)
-
-		# Replacing chicken w/ tofu
-		for i, step in enumerate(steps):
-			steps[i] = step.replace('chicken', 'tofu')
-
-		return steps
-
 
 
 	def get_ingredients(self):
@@ -160,8 +247,6 @@ class Recipe():
 				ingredient['name'] = ' '.join(string)
 				unknown[ingredient['name']] = ingredient
 
-
-			# After constructing the ingredient, we want to validate them before entering them into the ingredients list
 			# This initial parse will properly handle most ingredients, but the validation step is necessary to improve accuracy for the others
 			ingredients[ingredient['name']] = self.validate(ingredient)
 
@@ -180,10 +265,10 @@ class Recipe():
 	def validate(self, ingredient):
 
 		# Validating measurements
-		if ingredient['measurement'] not in measurements:
+		if ingredient['measurement'] not in data.measurements:
 			name = ingredient['measurement'] +' '+ ingredient['name']
 			for word in name.split():
-				if word in measurements or word[:-1] in measurements:
+				if word in data.measurements or word[:-1] in data.measurements:
 					ingredient['measurement'] = 'to taste' if word == 'to|taste' else word
 					ingredient['name'] = name.replace(word, '').replace('  ', ' ').strip()
 					break
@@ -192,8 +277,8 @@ class Recipe():
 				ingredient['measurement'] = 'whole'
 
 		# Validating ingredients, getting type information
-		for ingredient_type in ingredients_list:
-			if ingredient['name'] in ingredients_list[ingredient_type]:
+		for ingredient_type in data.ingredients_list:
+			if ingredient['name'] in data.ingredients_list[ingredient_type]:
 				ingredient['type'] = ingredient_type
 				break
 
@@ -202,8 +287,8 @@ class Recipe():
 			for word in reversed(ingredient['name'].split()):
 				found = False
 
-				for ingredient_type in ingredients_list:
-					ingredients = ingredients_list[ingredient_type]
+				for ingredient_type in data.ingredients_list:
+					ingredients = data.ingredients_list[ingredient_type]
 					if word in ingredients or word[:-1] in ingredients:
 						ingredient['type'] = ingredient_type
 						found = True
@@ -223,7 +308,37 @@ class Recipe():
 
 		return ingredient
 
+	# Outputs a vegetarian-ized version of the recipe
+	def vegetarian(self):
 
+		# Words that will be used to clean substeps
+		meat_words = ['bone', 'bone', 'skin', 'blood', 'juice', 'juice', 'pink', 'meat', 'cavity']
+
+		# Cleaning the steps of those words
+		steps = self.clean_substeps(meat_words)
+
+		# Replacing chicken w/ tofu
+		for i, step in enumerate(steps):
+			steps[i] = step.replace('chicken', 'tofu')
+
+		return steps
+
+
+	# Returns a step graph
+	def get_steps(self):
+		steps = [div.text for div in self.soup.find_all('div', {'class':'paragraph'})]
+
+		substeps = []
+		for step in steps:
+			substeps += [x.strip() for x in step.split('.')]
+
+		steps = [self.Step(x) for x in substeps]
+		steps = [s for s in steps if s.valid]
+
+		return steps
+
+
+# Returns a valid recipe url based on an integer input
 def get_recipe_url(num=259356):
 	response = requests.get(f'https://www.allrecipes.com/recipe/{num}')
 	if response.status_code == 200:
@@ -231,8 +346,16 @@ def get_recipe_url(num=259356):
 	return get_recipe_url(259356)
 
 
-urls = [9023, 259356, 20002, 237496, 16318, 228285]
 
-for url in urls[0:1]:
-	recipe = Recipe(get_recipe_url(url))
-	print(recipe.vegetarian())
+if __name__ == '__main__':
+
+	# Some valid recipes
+	urls = [9023, 259356, 20002, 237496, 16318, 228285]
+	
+	# Printing vegetarian conversions
+	for url in urls[1:2]:
+		recipe = Recipe(get_recipe_url(url))
+		#print(recipe.vegetarian())
+		print(recipe.text)
+		for x in recipe.steps:
+			print(x)

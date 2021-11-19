@@ -8,7 +8,7 @@ size_measurements = ['small', 'medium', 'large', 'extra large', 'whole']
 
 nonstandard_measurements = ['can', 'stick', 'handful', 'dash', 'to|taste']
 
-
+breads = ['ciabatta', 'whole wheat bread', 'sourdough', 'rye bread', 'pita bread', 'focaccia', 'multigrain', 'brioche', 'bread', 'waffle', 'english muffin']
 measurements = volume_measurements + mass_measurements + length_measurements + size_measurements + nonstandard_measurements
 
 

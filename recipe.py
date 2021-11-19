@@ -14,12 +14,12 @@ nlp = spacy.load("en_core_web_sm")
 # Query and Generation pipelines
 query = pipeline('question-answering')
 
-# Class representing a recipe
-class Recipe():
 
+# Class representing a recipe
+class Recipe:
 	# Class representing a node in a step graph
-	class Step():
-		
+	class Step:
+
 		def __init__(self, sentence):
 			self.text = sentence
 			self.tokens = nlp(sentence)
@@ -39,7 +39,6 @@ class Recipe():
 			actions, ingredients, tools = self.from_data()
 			actions, ingredients, tools = self.query(actions, ingredients, tools)
 
-			
 			valid = True if (actions and (ingredients or tools)) else False
 
 			return actions, ingredients, tools, valid
@@ -62,19 +61,17 @@ class Recipe():
 
 			# Given a question as a string, returns an answer and a confidence in that answer
 			def answer(question):
-				qdict =  {
+				qdict = {
 					'question': question,
 					'context': self.text
 				}
 
 				return query(qdict)['answer'], query(qdict)['score']
 
-
 			def append_answer(l, question, threshold=0):
 				item, confidence = answer(question)
 				if confidence > threshold and len(item.split()) < 4:
 					l.append((item, confidence))
-
 
 			# Querying actions
 			if not actions:
@@ -92,7 +89,6 @@ class Recipe():
 			# Deleting duplicates
 			actions = list(set(actions))
 
-
 			# Querying ingredients
 			if not ingredients:
 
@@ -101,7 +97,6 @@ class Recipe():
 					append_answer(ingredients, question)
 
 			ingredients = list(set(ingredients))
-
 
 			# Querying tools
 			if not tools:
@@ -115,32 +110,36 @@ class Recipe():
 
 			return actions, ingredients, tools
 
-
 	def __init__(self, url):
 		html_doc = request.urlopen(url)
 		self.soup = bs(html_doc, 'html.parser')
+		# recipe name
+		title = self.soup.find('title')
+		if ' | Allrecipes' in title.text:
+			title = title.text[:-13]
+		self.recipe_name = title
 		self.ingredients, self.unknown = self.get_ingredients()
-		self.text = [div.text for div in self.soup.find_all('div', {'class':'paragraph'})]
+		self.text = [div.text for div in self.soup.find_all('div', {'class': 'paragraph'})]
 		self.steps = self.get_steps()
+		# check categories of recipe
 		self.isVegetarian = False
 		self.isMexican = False
 		self.isDessert = False
 		self.isSandwich = False
-		span_headers = self.soup.find_all('span',{'class':'breadcrumbs__title'})
+		span_headers = self.soup.find_all('span', {'class': 'breadcrumbs__title'})
 		for title in span_headers:
-		    if 'sandwich' in title.text.lower():
-		        self.isSandwich = True
-		    if 'desserts' in title.text.lower():
-		        self.isDessert = True
-		    if 'mexican' in title.text.lower():
-		        self.isMexican = True
-		    if 'vegetarian' in title.text.lower():
-		        self.isVegetarian = True
+			if 'sandwich' in title.text.lower():
+				self.isSandwich = True
+			if 'desserts' in title.text.lower():
+				self.isDessert = True
+			if 'mexican' in title.text.lower():
+				self.isMexican = True
+			if 'vegetarian' in title.text.lower():
+				self.isVegetarian = True
 		print("Sandwich: ", self.isSandwich)
 		print("Veggie: ", self.isVegetarian)
 		print("Mexican: ", self.isMexican)
 		print("Dessert: ", self.isDessert)
-
 
 	@staticmethod
 	def clean_split(string, seps):
@@ -158,7 +157,6 @@ class Recipe():
 			result = result[:-1]
 		return [x.strip() for x in result if x != ' ']
 
-
 	# Given a list of words, cleans substeps of phrases that contain those words
 	def clean_substeps(self, to_clean):
 
@@ -172,17 +170,15 @@ class Recipe():
 					phrases = [phrase for phrase in phrases if word not in phrase]
 				substeps[i] = ', '.join(phrases)
 
-
 			step = '. '.join(substeps)
 			cleaned.append(step[:-1])
 
 		return cleaned
 
-
 	def get_ingredients(self):
 
 		# Getting all span texts with ingredients-item-name
-		ingredient_strings = self.soup.find_all('span',{'class':'ingredients-item-name'})
+		ingredient_strings = self.soup.find_all('span', {'class': 'ingredients-item-name'})
 		ingredient_strings = [span.text.lower() for span in ingredient_strings]
 
 		# Cleaning the ingredients
@@ -195,13 +191,13 @@ class Recipe():
 
 			# Ingredient structure
 			ingredient = {
-							'name': '',
-							'type': 'NULL',
-							'quantity': .0,
-							'measurement': '',
-							'descriptors': [],
-							'prep': []
-							}
+				'name': '',
+				'type': 'NULL',
+				'quantity': .0,
+				'measurement': '',
+				'descriptors': [],
+				'prep': []
+			}
 
 			# Very special case
 			if 'to taste' in string:
@@ -270,7 +266,6 @@ class Recipe():
 
 		return ingredients, unknown
 
-
 	# Given a vulgar fraction string, returns a float
 	def convert_fraction(self, string_fraction):
 		if len(string_fraction) == 1:
@@ -278,13 +273,12 @@ class Recipe():
 		else:
 			return sum([self.convert_fraction(c) for c in string_fraction])
 
-
 	# Validates the legitimacy/accuracy of an ingredient parse, returning a modified ingredient
 	def validate(self, ingredient):
 
 		# Validating measurements
 		if ingredient['measurement'] not in data.measurements:
-			name = ingredient['measurement'] +' '+ ingredient['name']
+			name = ingredient['measurement'] + ' ' + ingredient['name']
 			for word in name.split():
 				if word in data.measurements or word[:-1] in data.measurements:
 					ingredient['measurement'] = 'to taste' if word == 'to|taste' else word
@@ -326,27 +320,76 @@ class Recipe():
 
 		return ingredient
 
-	# Outputs a vegetarian-ized version of the recipe
-	def vegetarian(self):
+	# Changes recipe to be vegetarian, if it already isn't
+	def to_vegetarian(self):
+		if self.isVegetarian:
+			new_change = "No change was made because recipe is already vegetarian"
+			self.changes.append(new_change)
+		else:
+			# Words that will be used to clean substeps
+			meat_words = ['bone', 'skin', 'blood', 'juice', 'juice', 'pink', 'meat', 'cavity']
 
-		# Words that will be used to clean substeps
-		meat_words = ['bone', 'bone', 'skin', 'blood', 'juice', 'juice', 'pink', 'meat', 'cavity']
+			# Cleaning the steps of those words
+			steps = self.clean_substeps(meat_words)
 
-		# Cleaning the steps of those words
-		steps = self.clean_substeps(meat_words)
+			# Replacing chicken w/ tofu
+			for i, step in enumerate(steps):
+				steps[i] = step.replace('chicken', 'tofu')
 
-		# Replacing chicken w/ tofu
-		for i, step in enumerate(steps):
-			steps[i] = step.replace('chicken', 'tofu')
+			# TODO, REPLACE ACTUAL CHICKEN AND OTHER MEATS IN INGREDIENTS AND RECIPE NAME WITH TOFU
+			self.isVegetarian = True
+			new_change = "Replaced chicken with tofu to make recipe vegetarian"
+			self.changes.append(new_change)
 
-		return steps
+	# Changes recipe to be non-vegetarian, if it already isn't
+	def from_vegetarian(self):
+		if not self.isVegetarian:
+			new_change = "No change was made because recipe is already not vegetarian"
+			self.changes.append(new_change)
+		else:
+			# TODO
+			self.isVegetarian = False
+			new_change = "Something was done to make the recipe not vegetarian idk yet"
+			self.changes.append(new_change)
 
-	def toMexican(self):
-		return 0
+	# Make recipe more healthy, currently done by halving quantities of all seasoning
+	def more_healthy(self):
+		for ingred in self.ingredients:
+			ing = self.ingredients[ingred]
+			if ing['type'] == 'seasonings':
+				if ing['special']:
+					continue
+				else:
+					ing['quantity'] = ing['quantity'] * 0.5
+					new_change = "Halved the quantity of " + ing['name'] + " to make recipe more healthy"
+					self.changes.append(new_change)
+
+	# Make recipe less healthy, currently done by doubling quantities of all seasoning
+	def less_healthy(self):
+		# basic: double all quantities of seasoning
+		for ingred in self.ingredients:
+			ing = self.ingredients[ingred]
+			if ing['type'] == 'seasonings':
+				if ing['special']:
+					continue
+				else:
+					ing['quantity'] = ing['quantity'] * 2.0
+					new_change = "Doubled the quantity of " + ing['name'] + " to make recipe less healthy"
+					self.changes.append(new_change)
+
+	def to_mexican(self):
+		if self.isMexican:
+			new_change = "No change was made because recipe is already Mexican"
+			self.changes.append(new_change)
+		else:
+			self.isMexican = True
+			# TO DO
+			new_change = "Something was done to make the recipe part of Japanese cuisine"
+			self.changes.append(new_change)
 
 	# Returns a step graph
 	def get_steps(self):
-		steps = [div.text for div in self.soup.find_all('div', {'class':'paragraph'})]
+		steps = [div.text for div in self.soup.find_all('div', {'class': 'paragraph'})]
 
 		substeps = []
 		for step in steps:
@@ -366,16 +409,15 @@ def get_recipe_url(num=259356):
 	return get_recipe_url(259356)
 
 
-
 if __name__ == '__main__':
 
 	# Some valid recipes
 	urls = [9023, 259356, 20002, 237496, 16318, 228285]
-	
+
 	# Printing vegetarian conversions
 	for url in urls[1:2]:
 		recipe = Recipe(get_recipe_url(url))
-		#print(recipe.vegetarian())
+		# print(recipe.vegetarian())
 		print(recipe.text)
 		for x in recipe.steps:
 			print(x)

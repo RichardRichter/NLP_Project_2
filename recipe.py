@@ -377,15 +377,82 @@ class Recipe:
 					new_change = "Doubled the quantity of " + ing['name'] + " to make recipe less healthy"
 					self.changes.append(new_change)
 
-	def to_mexican(self):
-		if self.isMexican:
-			new_change = "No change was made because recipe is already Mexican"
-			self.changes.append(new_change)
+	def toMexican(self):
+		print("you are in to Mexican")
+		potential_main_actions = []
+		for step in self.steps:
+			each_step = step.text.split()
+			potential_main_actions.append(each_step[0])
+		print(potential_main_actions)
+		main_action = []
+		for potential in potential_main_actions:
+			if potential.lower() in data.cooking_methods:
+				main_action.append(potential)
+		print(main_action)
+		#if 'bake' in main_action:
+		#html_title = "Mexican Inspired: " + html_title
+		#print(html_title)
+		list_of_altered_ingredients = []
+		ingredients = self.get_ingredients()
+		if self.isDessert:
+			print("dessert")
 		else:
-			self.isMexican = True
-			# TO DO
-			new_change = "Something was done to make the recipe part of Japanese cuisine"
-			self.changes.append(new_change)
+			list_of_seasonings = []
+			list_of_starches = []
+			for diction in self.ingredients:
+				print(diction['type'])
+				if diction['type'] == 'seasoning':
+					list_of_seasonings.append(self.ingredients.index(diction))
+				if diction['type'] == 'starch':
+					list_of_starches.append(self.ingredients.index(diction))
+			print(list_of_seasonings)
+			print(list_of_starches)
+			list_of_altered_ingredients = []
+			if self.isSandwich:
+				for star in list_of_starches:
+					self.ingredients[star]['name'] = 'French bread'
+					self.ingredients[star]['measurement'] = 'loaf'
+					print(self.ingredients[star])
+					torta = data.mexican_bread[0]
+					if self.ingredients[star]['quantity'] != 0:
+						torta['quantity'] = self.ingredients[star]['quantity']
+					if self.ingredients[star]['measurement'] != 'whole':
+						torta['measurement'] = self.ingredients[star]['measurement']
+					list_of_altered_ingredients.append(tuple((self.ingredients[star],torta)))
+			for alter in list_of_altered_ingredients:
+				(old,new) = alter
+				old_name = old['name']
+				print(old_name)
+				print(new['name'])
+				old_name_split = old_name.split()
+				for x in range(0, len(self.steps)):
+					for name in old_name_split:
+						print(name)
+						if name in self.steps[x].text:
+							#print("in step")
+							for k in old:
+								if 'name' == k:
+									self.steps[x].text = self.steps[x].text.replace(str(name), str(new['name']).upper())
+								else:
+									self.steps[x].text = self.steps[x].text.replace(str(old[k]), str(new[k]))							
+							#if str(old['measurement']) in self.steps[x].text:
+							#	self.steps[x].text = self.steps[x].text.replace(str(old['measurement']), str(new['measurement']))
+							#if str(old['quantity']) in self.steps[x].text:
+							#	self.steps[x].text = self.steps[x].text.replace(str(old['quantity']), str(new['quantity']))
+							#if str(old['prep']) in self.steps[x].text:
+							#	self.steps[x].text = self.steps[x].text.replace(str(old['prep']), str(new['prep']))
+					for k in new:
+						print(k)
+						variable = str(new[k]).upper()
+						re1 = r'(' + variable + r' )' + r'\1+'
+						self.steps[x].text = re.sub(re1, r'\1', self.steps[x].text)
+						self.steps[x].text = self.steps[x].text.replace(str(new[k]).upper(), str(new[k]))
+							#self.steps[x].text = re.sub(r'([A-Z])\1+', r'\1', self.steps[x].text)
+							#self.steps[x].text = re.sub(re.escape(variable) + r'\1+', r'\1', self.steps[x].text)
+							#self.steps[x].text = re.sub(r'(TORTA BREAD )\1+', r'\1', self.steps[x].text)
+
+			for step in self.steps:
+				print(step.text)
 
 	# Returns a step graph
 	def get_steps(self):

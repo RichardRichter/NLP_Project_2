@@ -502,6 +502,83 @@ class Recipe:
 					ing['quantity'] = ing['quantity'] * 2.0
 					new_change = "Doubled the quantity of " + ing['name'] + " to make recipe less healthy"
 					self.changes.append(new_change)
+	def toDouble(self):
+		pattern_s = re.compile(r'\d+ second')
+		pattern_m = re.compile(r'\d+ minute')
+		pattern_h = re.compile(r'\d+ hour')
+		list_of_patterns = [pattern_s, pattern_m, pattern_h]
+		print("Original Ingredients")
+		for ingredient in self.ingredients:
+			print(ingredient)
+		print("Original Recipe")
+		for step in self.steps:
+			print(step.text)
+		for ingredient in self.ingredients:
+			for y in range(0, len(self.steps)):
+				name_split = ingredient['name'].split()
+				for name in name_split:
+					if name in self.steps[y].text:
+						re1 = str(ingredient['quantity']) +" "+ ingredient['measurement'] +" "+ name
+						double = ingredient['quantity'] * 2
+						new_value = str(double) + " " + str(ingredient['measurement']) + " " + str(name)
+						self.steps[y].text = re.sub(re1, new_value, self.steps[y].text)
+						#self.steps[y].text = self.steps[y].text.replace(str(int(ingredient['quantity'])), str(double))
+		for y in range(0, len(self.steps)):
+			for pattern in list_of_patterns:
+				if pattern.search(self.steps[y].text):
+					values_to_change = re.findall(pattern, self.steps[y].text)
+					for x in range(0, len(list(values_to_change))):
+						replace_value = int(re.sub("[^0-9]", "", values_to_change[x]))
+						greater_value = int(replace_value * 1.5)
+						self.steps[y].text = self.steps[y].text.replace(str(replace_value), str(greater_value))
+		for x in range(0, len(self.ingredients)):
+			initial = self.ingredients[x]['quantity']
+			double = initial * 2
+			self.ingredients[x]['quantity'] = double
+		print("New Ingredients")
+		for ingredient in self.ingredients:
+			print(ingredient)
+		print("Altered Steps")
+		for step in self.steps:
+			print(step.text)
+	def toHalf(self):
+		pattern_s = re.compile(r'\d+ second')
+		pattern_m = re.compile(r'\d+ minute')
+		pattern_h = re.compile(r'\d+ hour')
+		list_of_patterns = [pattern_s, pattern_m, pattern_h]
+		print("Original Ingredients")
+		for ingredient in self.ingredients:
+			print(ingredient)
+		print("Original Recipe")
+		for step in self.steps:
+			print(step.text)
+		for ingredient in self.ingredients:
+			for y in range(0, len(self.steps)):
+				name_split = ingredient['name'].split()
+				for name in name_split:
+					if name in self.steps[y].text:
+						re1 = str(ingredient['quantity']) +" "+ ingredient['measurement'] +" "+ name
+						half = ingredient['quantity'] / 2
+						new_value = str(half) + " " + str(ingredient['measurement']) + " " + str(name)
+						self.steps[y].text = re.sub(re1, new_value, self.steps[y].text)
+		for y in range(0, len(self.steps)):
+			for pattern in list_of_patterns:
+				if pattern.search(self.steps[y].text):
+					values_to_change = re.findall(pattern, self.steps[y].text)
+					for x in range(0, len(list(values_to_change))):
+						replace_value = int(re.sub("[^0-9]", "", values_to_change[x]))
+						lesser_value = int(replace_value / 1.5)
+						self.steps[y].text = self.steps[y].text.replace(str(replace_value), str(lesser_value))
+		for x in range(0, len(self.ingredients)):
+			initial = self.ingredients[x]['quantity']
+			half = initial / 2
+			self.ingredients[x]['quantity'] = half
+		print("New Ingredients")
+		for ingredient in self.ingredients:
+			print(ingredient)
+		print("Altered Steps")
+		for step in self.steps:
+			print(step.text)
 
 	def mainActions(self):
 		potential_main_actions = []

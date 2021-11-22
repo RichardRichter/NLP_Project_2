@@ -145,10 +145,10 @@ class Recipe:
 				self.isMexican = True
 			if 'vegetarian' in title.text.lower():
 				self.isVegetarian = True
-		print("Sandwich: ", self.isSandwich)
-		print("Veggie: ", self.isVegetarian)
-		print("Mexican: ", self.isMexican)
-		print("Dessert: ", self.isDessert)
+		# print("Sandwich: ", self.isSandwich)
+		# print("Veggie: ", self.isVegetarian)
+		# print("Mexican: ", self.isMexican)
+		# print("Dessert: ", self.isDessert)
 
 	def update_ingredient_indices(self):
 		self.ingredient_indices = {}
@@ -187,13 +187,12 @@ class Recipe:
 					substeps[j] = ''
 
 			step = '. '.join(substeps)
-			print("\nReplacing step " + str(i) + " with " + step)
 			if len(step.strip()) == 0:
 				self.steps[i].new_text = ''
 			else:
 				cleaned.append(step)
 				self.steps[i].new_text = step
-
+		self.steps = [s for s in self.steps if s.new_text != '']
 		return cleaned
 
 	def get_ingredients(self):
@@ -502,6 +501,7 @@ class Recipe:
 					ing['quantity'] = ing['quantity'] * 2.0
 					new_change = "Doubled the quantity of " + ing['name'] + " to make recipe less healthy"
 					self.changes.append(new_change)
+
 	def toDouble(self):
 		pattern_s = re.compile(r'\d+ second')
 		pattern_m = re.compile(r'\d+ minute')
@@ -518,11 +518,11 @@ class Recipe:
 				name_split = ingredient['name'].split()
 				for name in name_split:
 					if name in self.steps[y].text:
-						re1 = str(ingredient['quantity']) +" "+ ingredient['measurement'] +" "+ name
+						re1 = str(ingredient['quantity']) + " " + ingredient['measurement'] + " " + name
 						double = ingredient['quantity'] * 2
 						new_value = str(double) + " " + str(ingredient['measurement']) + " " + str(name)
 						self.steps[y].text = re.sub(re1, new_value, self.steps[y].text)
-						#self.steps[y].text = self.steps[y].text.replace(str(int(ingredient['quantity'])), str(double))
+				# self.steps[y].text = self.steps[y].text.replace(str(int(ingredient['quantity'])), str(double))
 		for y in range(0, len(self.steps)):
 			for pattern in list_of_patterns:
 				if pattern.search(self.steps[y].text):
@@ -541,6 +541,7 @@ class Recipe:
 		print("Altered Steps")
 		for step in self.steps:
 			print(step.text)
+
 	def toHalf(self):
 		pattern_s = re.compile(r'\d+ second')
 		pattern_m = re.compile(r'\d+ minute')
@@ -557,7 +558,7 @@ class Recipe:
 				name_split = ingredient['name'].split()
 				for name in name_split:
 					if name in self.steps[y].text:
-						re1 = str(ingredient['quantity']) +" "+ ingredient['measurement'] +" "+ name
+						re1 = str(ingredient['quantity']) + " " + ingredient['measurement'] + " " + name
 						half = ingredient['quantity'] / 2
 						new_value = str(half) + " " + str(ingredient['measurement']) + " " + str(name)
 						self.steps[y].text = re.sub(re1, new_value, self.steps[y].text)
@@ -803,6 +804,46 @@ class Recipe:
 
 		return steps
 
+	def output_ingredients(self):
+		print("Ingredients: ")
+		for info in self.ingredients:
+			if info['quantity'] == 0.0:
+				print(info['name'], info['measurement'])
+			else:
+				prep_string = ', '.join(info['prep'])
+				if len(prep_string) > 0:
+					prep_string = ', ' + prep_string
+				descriptors_not_in_name = [d for d in info['descriptors'] if d not in info['name']]
+				d = ' ' + ', '.join(descriptors_not_in_name)
+				if len(d) == 1:
+					d = ''
+				q = info['quantity']
+				if q % 1 == 0.0:
+					q = str(int(q))
+				else:
+					q = str(q)
+				m = '' if info['measurement'] == 'whole' else info['measurement']
+				n = info['name']
+				if len(m) == 0:
+					print(q + d, n + prep_string)
+				else:
+					print(q + d, m, n + prep_string)
+
+	def output_steps(self):
+		print("Instructions:")
+		counter = 1
+		for step in self.steps:
+			print(str(counter) + '. ' + step.new_text)
+			counter += 1
+
+	def output_recipe(self):
+		print(self.recipe_name)
+		print('')
+		self.output_ingredients()
+		print('')
+		self.output_steps()
+		print('')
+
 
 # Returns a valid recipe url based on an integer input
 def get_recipe_url(num=259356):
@@ -811,24 +852,68 @@ def get_recipe_url(num=259356):
 		return response.url
 	return get_recipe_url(259356)
 
+def main():
+	print("Welcome to Jason, Nathan, and Ricky's Recipe Parser")
+	print("Please input the url for the allrecipes recipe to parse:")
+	url = input()
+	while 'allrecipes.com/recipe/' not in url:
+		print("This doesn't seem to be an allrecipes.com url. Try again.")
+		url = input()
+
+	recipe = Recipe(url)
+	recipe.output_recipe()
+	transformation_choices = [str(i) for i in range(1, 9)]
+	menu_options = "Select Desired Transformation:\n1: Make recipe vegetarian\n2: Make recipe non-vegetarian\n" \
+				   "3: Make recipe more healthy\n4: Make recipe less healthy\n" \
+				   "5: Make recipe Mexican\n6: Double quantity of recipe\n7: Half quantity of recipe\n8: Quit"
+	print(menu_options)
+	choice = input()
+	while choice not in transformation_choices:
+		print("This is an invalid transformation choice. Please choose again.")
+		print(menu_options)
+		choice = input()
+
+	selected_choice = int(choice)
+	if selected_choice == 1:
+		recipe.to_vegetarian()
+	elif selected_choice == 2:
+		recipe.from_vegetarian()
+	elif selected_choice == 3:
+		recipe.more_healthy()
+	elif selected_choice == 4:
+		recipe.less_healthy()
+	elif selected_choice == 5:
+		recipe.toMexican()
+	elif selected_choice == 6:
+		recipe.toDouble()
+	elif selected_choice == 7:
+		recipe.toHalf()
+	elif selected_choice == 8:
+		return
+
+	recipe.output_recipe()
+	print("Changes made to original recipe:")
+	for i, change in enumerate(recipe.changes):
+		print(str(i+1) + '. ' + change)
+
 
 if __name__ == '__main__':
-
+	main()
 	# Some valid recipes
-	urls = [9023, 259356, 20002, 237496, 16318, 228285, 24712, 54492, 218628, 19283]
-
-	# Printing vegetarian conversions
-	for url in urls[9:]:
-		recipe = Recipe(get_recipe_url(url))
-		# print(recipe.vegetarian())
-		print(recipe.text)
-		for ing in recipe.ingredients:
-			print(ing)
-
-		recipe.more_healthy()
-		print(recipe.recipe_name)
-		for ing in recipe.ingredients:
-			print(ing)
-		for steps in recipe.steps:
-			print(steps.new_text)
-		print(recipe.changes)
+	# urls = [9023, 259356, 20002, 237496, 16318, 228285, 24712, 54492, 218628, 19283]
+	#
+	# # Printing vegetarian conversions
+	# for url in urls[1:2]:
+	# 	recipe = Recipe(get_recipe_url(url))
+	# 	# print(recipe.vegetarian())
+	# 	print(recipe.text)
+	# 	recipe.output_ingredients()
+	# 	recipe.output_steps()
+	#
+	#
+	# 	recipe.to_vegetarian()
+	# 	# print(recipe.recipe_name)
+	# 	recipe.output_ingredients()
+	# 	# for steps in recipe.steps:
+	# 	# 	print(steps.new_text)
+	# 	print(recipe.changes)

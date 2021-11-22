@@ -7,6 +7,7 @@ import requests
 import unicodedata
 import re
 import spacy
+import copy
 
 # Loading spacy
 nlp = spacy.load("en_core_web_sm")
@@ -20,11 +21,18 @@ class Recipe:
 	# Class representing a node in a step graph
 	class Step:
 
-		def __init__(self, sentence):
-			self.text = sentence
-			self.tokens = nlp(sentence)
-			self.actions, self.ingredients, self.tools, self.valid = self.get_info()
-			self.conditions = None
+		def __init__(self, sentence=None):
+			if sentence is None:
+				self.text = ''
+				self.actions, self.ingredients, self.tools = [], [], []
+				self.new_text = ''
+				self.conditions = None
+			else:
+				self.text = sentence
+				self.tokens = nlp(sentence)
+				self.actions, self.ingredients, self.tools, self.valid = self.get_info()
+				self.new_text = sentence
+				self.conditions = None
 
 		def __str__(self):
 			return f'({self.actions} the {self.ingredients} using {self.tools})'
@@ -118,7 +126,7 @@ class Recipe:
 		if ' | Allrecipes' in title.text:
 			title = title.text[:-13]
 		self.recipe_name = title
-		self.ingredients, self.unknown = self.get_ingredients()
+		self.ingredients, self.unknown, self.ingredient_indices = self.get_ingredients()
 		self.text = [div.text for div in self.soup.find_all('div', {'class': 'paragraph'})]
 		self.steps = self.get_steps()
 		# check categories of recipe
@@ -126,6 +134,7 @@ class Recipe:
 		self.isMexican = False
 		self.isDessert = False
 		self.isSandwich = False
+		self.changes = []
 		span_headers = self.soup.find_all('span', {'class': 'breadcrumbs__title'})
 		for title in span_headers:
 			if 'sandwich' in title.text.lower():
@@ -140,6 +149,12 @@ class Recipe:
 		print("Veggie: ", self.isVegetarian)
 		print("Mexican: ", self.isMexican)
 		print("Dessert: ", self.isDessert)
+
+	def update_ingredient_indices(self):
+		self.ingredient_indices = {}
+		for i in range(len(self.ingredients)):
+			ing = self.ingredients[i]
+			self.ingredient_indices[ing['name']] = i
 
 	@staticmethod
 	def clean_split(string, seps):
@@ -159,19 +174,25 @@ class Recipe:
 
 	# Given a list of words, cleans substeps of phrases that contain those words
 	def clean_substeps(self, to_clean):
-
 		# Getting substeps
 		cleaned = []
 		for i, step in enumerate(self.steps):
-			substeps = step.split('.')
-			for i, substep in enumerate(substeps):
-				phrases = self.clean_split(substep, [',', ';', 'until', 'and'])
+			substeps = step.text.split('.')
+			for j, substep in enumerate(substeps):
+				phrases = self.clean_split(substep, [',', ';', 'until', ', and'])
 				for word in to_clean:
 					phrases = [phrase for phrase in phrases if word not in phrase]
-				substeps[i] = ', '.join(phrases)
+				substeps[j] = ', '.join(phrases)
+				if 'should read' in substeps[j] and 'degree' in substeps[j] and 'thermometer' not in substeps[j]:
+					substeps[j] = ''
 
 			step = '. '.join(substeps)
-			cleaned.append(step[:-1])
+			print("\nReplacing step " + str(i) + " with " + step)
+			if len(step.strip()) == 0:
+				self.steps[i].new_text = ''
+			else:
+				cleaned.append(step)
+				self.steps[i].new_text = step
 
 		return cleaned
 
@@ -182,8 +203,10 @@ class Recipe:
 		ingredient_strings = [span.text.lower() for span in ingredient_strings]
 
 		# Cleaning the ingredients
-		ingredients = {}
+		ingredients = []
 		unknown = {}
+		ingredient_indices = {}
+		index = 0
 		for string in ingredient_strings:
 
 			# Replacing thin spaces
@@ -262,9 +285,11 @@ class Recipe:
 				unknown[ingredient['name']] = ingredient
 
 			# This initial parse will properly handle most ingredients, but the validation step is necessary to improve accuracy for the others
-			ingredients[ingredient['name']] = self.validate(ingredient)
+			ingredients.append(self.validate(ingredient))
+			ingredient_indices[ingredient['name']] = index
+			index += 1
 
-		return ingredients, unknown
+		return ingredients, unknown, ingredient_indices
 
 	# Given a vulgar fraction string, returns a float
 	def convert_fraction(self, string_fraction):
@@ -326,71 +351,173 @@ class Recipe:
 			new_change = "No change was made because recipe is already vegetarian"
 			self.changes.append(new_change)
 		else:
-			# Words that will be used to clean substeps
-			meat_words = ['bone', 'skin', 'blood', 'juice', 'juice', 'pink', 'meat', 'cavity']
+			meats_found = []
+			for ing, ind in self.ingredient_indices.items():
+				if self.ingredients[ind]['type'] == 'protein':
+					for meat in data.meat_proteins:
+						if meat in ing:
+							ingredient = copy.deepcopy(self.ingredients[ind])
+							# whole chicken or measurement not in mass, so change unit of measurement to mass
+							if ingredient['measurement'] not in data.mass_measurements:
+								if 'tofu' in self.ingredient_indices:
+									# add 12 ounces to already existing tofu
+									tofu_index = self.ingredient_indices['tofu']
+									if self.ingredients[tofu_index]['measurement'] == 'oz' or self.ingredients[tofu_index]['measurement'] == 'ounce':
+										self.ingredients[tofu_index]['quantity'] += 12
+									else:
+										# otherwise tofu is likely in weight measurements, just double quantity
+										self.ingredients[tofu_index]['quantity'] *= 2.0
+									# remove the meat from ingredients and reupdate the indices
+									# del self.ingredients[ind]
+									self.update_ingredient_indices()
+								else:
+									# tofu doesn't exist so substitute it's position in the ingredients
+									self.ingredients[ind] = {
+										'name': 'tofu',
+										'type': 'protein',
+										'quantity': 12.0,
+										'measurement': 'ounce',
+										'descriptors': [],
+										'prep': []
+									}
+							# the meat is weight-based so just convert the same weight in tofu
+							else:
+								if 'tofu' in self.ingredient_indices:
+									tofu_index = self.ingredient_indices['tofu']
+									if self.ingredients[tofu_index]['measurement'] == ingredient['measurement']:
+										# add same quantity
+										self.ingredients[tofu_index]['quantity'] += ingredient['quantity']
+									else:
+										# otherwise tofu is likely in another weight
+										self.ingredients[tofu_index]['quantity'] += 12.0
+								else:
+									self.ingredients[ind] = {
+																'name': 'tofu',
+																'type': 'protein',
+																'quantity': ingredient['quantity'],
+																'measurement': ingredient['measurement'],
+																'descriptors': [],
+																'prep': []
+															}
+							meats_found.append(ingredient)
+							self.update_ingredient_indices()
+							# found the matched meat so stop
+							break
 
 			# Cleaning the steps of those words
-			steps = self.clean_substeps(meat_words)
+			if len(meats_found) > 0:
+				steps = self.clean_substeps(data.meat_words)
+				tofu_index = self.ingredient_indices['tofu']
+				# Replacing chicken w/ tofu
+				for i, step in enumerate(self.steps):
+					for meats in meats_found:
+						meat_words = meats['name'].split()
+						for word in meat_words:
+							if word in self.steps[i].new_text:
+								for k in meats:
+									if k == 'name':
+										self.steps[i].new_text = step.new_text.replace(word, 'tofu')
+									else:
+										self.steps[i].new_text = step.new_text.replace(str(meats[k]), str(self.ingredients[tofu_index][k]))
+								self.steps[i].new_text = re.sub(r'(tofu )\1+', r'\1', self.steps[i].new_text)
+								self.steps[i].new_text = self.steps[i].new_text.replace('tofu, tofu', 'tofu')
+								self.steps[i].new_text = self.steps[i].new_text.replace('tofu, and tofu', 'tofu')
+								self.steps[i].new_text = self.steps[i].new_text.replace('tofu tofu', 'tofu')
 
-			# Replacing chicken w/ tofu
-			for i, step in enumerate(steps):
-				steps[i] = step.replace('chicken', 'tofu')
-
-			# TODO, REPLACE ACTUAL CHICKEN AND OTHER MEATS IN INGREDIENTS AND RECIPE NAME WITH TOFU
-			self.isVegetarian = True
-			new_change = "Replaced chicken with tofu to make recipe vegetarian"
-			self.changes.append(new_change)
+				self.isVegetarian = True
+				self.recipe_name = "Vegetarian Variant of " + self.recipe_name
+				self.ingredients = [i for i in self.ingredients if i not in meats_found]
+				for meats in meats_found:
+					new_change = "Replaced " + meats['name'] + " with tofu to make recipe vegetarian"
+					self.changes.append(new_change)
+			else:
+				self.isVegetarian = True
+				new_change = "Couldn't find any meats in the ingredients. The recipe has now been labeled vegetarian and no changes have been made"
+				self.changes.append(new_change)
 
 	# Changes recipe to be non-vegetarian, if it already isn't
 	def from_vegetarian(self):
 		if not self.isVegetarian:
-			new_change = "No change was made because recipe is already not vegetarian"
+			new_change = "No change was made because recipe is already non-vegetarian"
 			self.changes.append(new_change)
 		else:
-			# TODO
+			self.ingredients.append({'name': 'vegetable oil (for chicken)',
+									 'type': 'cooking medium',
+									 'quantity': 1,
+									 'measurement': 'tablespoon',
+									 'descriptors': [],
+									 'prep': []
+									 })
+
+			self.ingredients.append({'name': 'ground chicken',
+									 'type': 'protein',
+									 'quantity': 16,
+									 'measurement': 'ounce',
+									 'descriptors': [],
+									 'prep': []
+									 })
+			self.update_ingredient_indices()
+			new_step = self.Step()
+			new_step.text = new_step.new_text = 'Coat a pan with thin layer of vegetable oil (for chicken), place ground chicken onto pan and cook on stove over medium heat for 7 minutes or until brown.'
+			new_step.actions = ['Cook']
+			new_step.ingredients = ['vegetable oil (for chicken)', 'ground chicken']
+			new_step.tools = ['pan']
+			self.steps.append(new_step)
 			self.isVegetarian = False
-			new_change = "Something was done to make the recipe not vegetarian idk yet"
+			new_change = "Added ground chicken to the recipe to make it non-vegetarian."
 			self.changes.append(new_change)
 
 	# Make recipe more healthy, currently done by halving quantities of all seasoning
 	def more_healthy(self):
-		for ingred in self.ingredients:
-			ing = self.ingredients[ingred]
-			if ing['type'] == 'seasonings':
-				if ing['special']:
+		for ing in self.ingredients:
+			if ing['type'] == 'seasoning':
+				if 'sugar' in ing['name']:
+					old_sugar = ing['name']
+					new_change = "Substituted " + old_sugar + " with granulated honey to make recipe more healthy"
+					self.changes.append(new_change)
+					ing['name'] = 'granulated honey'
+					ing['descriptors'] = []
+					print(old_sugar)
+					for i, step in enumerate(self.steps):
+						self.steps[i].new_text = self.steps[i].new_text.replace(old_sugar, 'granulated honey')
+						self.steps[i].new_text = self.steps[i].new_text.replace('sugar', 'honey')
+				elif ing['quantity'] == 0.0:
 					continue
 				else:
 					ing['quantity'] = ing['quantity'] * 0.5
 					new_change = "Halved the quantity of " + ing['name'] + " to make recipe more healthy"
 					self.changes.append(new_change)
+		if len(self.changes) == 0:
+			new_change= "There's no seasonings in the recipe, so it's quite healthy already. Maybe you can eat some fruit as well?"
+			self.changes.append(new_change)
 
 	# Make recipe less healthy, currently done by doubling quantities of all seasoning
 	def less_healthy(self):
 		# basic: double all quantities of seasoning
-		for ingred in self.ingredients:
-			ing = self.ingredients[ingred]
-			if ing['type'] == 'seasonings':
-				if ing['special']:
+		for ing in self.ingredients:
+			if ing['type'] == 'seasoning':
+				if ing['quantity'] == 0.0:
 					continue
 				else:
 					ing['quantity'] = ing['quantity'] * 2.0
 					new_change = "Doubled the quantity of " + ing['name'] + " to make recipe less healthy"
 					self.changes.append(new_change)
+
 	def mainActions(self):
 		potential_main_actions = []
 		for step in self.steps:
 			each_step = step.text.split()
 			potential_main_actions.append(each_step[0])
-		#print(potential_main_actions)
+		# print(potential_main_actions)
 		main_actions = []
 		for potential in potential_main_actions:
 			if potential.lower() in data.cooking_methods:
 				main_action.append(potential)
 		return main_actions
-	
+
 	def toMexican(self):
 		if self.isMexican == True:
-			print("Hey, Wow, Looking at the meta data (and the title) it seems like this recipie is already Mexican")
+			print("Hey, Wow, Looking at the meta data (and the title) it seems like this recipe is already Mexican")
 			print("perhaps you would like to try a different one of our recipe conversions, I hear they are swell.")
 		else:
 			self.isMexican = True
@@ -403,7 +530,7 @@ class Recipe:
 				print(step.text)
 			print("Convert To Mexican")
 			print("Mexican Interpretation of: " + self.recipe_name)
-			
+
 			ingredients = self.get_ingredients()
 			list_of_altered_ingredients = []
 			list_of_seasonings = []
@@ -414,7 +541,7 @@ class Recipe:
 			list_of_milks = []
 			list_of_fruits = []
 
-			#Identify things of interest
+			# Identify things of interest
 			for diction in self.ingredients:
 				if diction['type'] == 'protein':
 					list_of_proteins.append(self.ingredients.index(diction))
@@ -428,7 +555,7 @@ class Recipe:
 					list_of_fruits.append(self.ingredients.index(diction))
 
 			if self.isDessert:
-				#Changing Seasonings
+				# Changing Seasonings
 				mds = data.mexican_dessert_seasonings
 				for m in mds:
 					for seasoning in list(list_of_seasonings):
@@ -451,49 +578,52 @@ class Recipe:
 					if i >= len(mds):
 						break
 					else:
-						list_of_altered_ingredients.append(tuple((self.ingredients[list_of_fruits[i]], mds[i])))	
-				#Replacing a milk with Tres Leches	
+						list_of_altered_ingredients.append(tuple((self.ingredients[list_of_fruits[i]], mds[i])))
+				# Replacing a milk with Tres Leches
 				for protein in list_of_proteins:
 					if 'milk' in self.ingredients[protein]['name']:
 						list_of_milks.append(protein)
 				if len(list_of_milks) > 0:
-					list_of_altered_ingredients.append(tuple((self.ingredients[list_of_milks[0]], data.mexican_tres_leches[0])))
+					list_of_altered_ingredients.append(
+						tuple((self.ingredients[list_of_milks[0]], data.mexican_tres_leches[0])))
 
 			else:
-				#Adding Salsa if a sauce was used.
+				# Adding Salsa if a sauce was used.
 				if len(list_of_sauces) > 0:
-					list_of_altered_ingredients.append(tuple((self.ingredients[list_of_sauces[0]],data.mexican_salsa[0])))
+					list_of_altered_ingredients.append(
+						tuple((self.ingredients[list_of_sauces[0]], data.mexican_salsa[0])))
 
-				#Changing Starches (Sandwich Breads to Torta) and (All other starches, make one Rice)
+				# Changing Starches (Sandwich Breads to Torta) and (All other starches, make one Rice)
 				if self.isSandwich:
 					for star in list_of_starches:
 						torta = data.mexican_bread[0]
-						#if self.ingredients[star]['quantity'] != 0:
+						# if self.ingredients[star]['quantity'] != 0:
 						#	torta['quantity'] = self.ingredients[star]['quantity']
-						#if self.ingredients[star]['measurement'] != 'whole':
+						# if self.ingredients[star]['measurement'] != 'whole':
 						#	torta['measurement'] = self.ingredients[star]['measurement']
-						list_of_altered_ingredients.append(tuple((self.ingredients[star],torta)))
+						list_of_altered_ingredients.append(tuple((self.ingredients[star], torta)))
 				else:
 					if len(list_of_starches) > 0:
 						replacement_starch = data.mexican_rice[0]
-						list_of_altered_ingredients.append(tuple((self.ingredients[list_of_starches[0]],replacement_starch)))
+						list_of_altered_ingredients.append(
+							tuple((self.ingredients[list_of_starches[0]], replacement_starch)))
 
-				#Changing Meats and identifying cheeses
+				# Changing Meats and identifying cheeses
 				for protein in list_of_proteins:
 					if 'beef' in self.ingredients[protein]['name']:
 						carne_asada = data.mexican_protein[2]
-						#if self.ingredients[protein]['quantity'] != 0:
+						# if self.ingredients[protein]['quantity'] != 0:
 						#	carne_asada['quantity'] = self.ingredients[protein]['quantity']
-						#if self.ingredients[protein]['measurement'] != 0:
+						# if self.ingredients[protein]['measurement'] != 0:
 						#	carne_asada['measurement'] = self.ingredients[protein]['measurement']
 						list_of_altered_ingredients.append(tuple((self.ingredients[protein], carne_asada)))
 					if 'pork' in self.ingredients[protein]['name']:
 						alpastor = data.mexican_protein[0]
-						list_of_altered_ingredients.append(tuple((self.ingredients[protein],alpastor)))
+						list_of_altered_ingredients.append(tuple((self.ingredients[protein], alpastor)))
 					if 'cheese' in self.ingredients[protein]['name']:
 						list_of_cheeses.append(protein)
 
-				#Changing Cheeses
+				# Changing Cheeses
 				mx_cheese = data.mexican_cheese
 				for mex in mx_cheese:
 					for che in list(list_of_cheeses):
@@ -505,8 +635,8 @@ class Recipe:
 						break
 					else:
 						list_of_altered_ingredients.append(tuple((self.ingredients[list_of_cheeses[i]], mx_cheese[i])))
-			
-				#Changing Seasonings
+
+				# Changing Seasonings
 				mexican_seasonings = data.mexican_seasonings
 				print("SEASONINGS")
 				for mex in mexican_seasonings:
@@ -519,46 +649,49 @@ class Recipe:
 					if i >= len(mexican_seasonings):
 						break
 					else:
-						list_of_altered_ingredients.append(tuple((self.ingredients[list_of_seasonings[i]], mexican_seasonings[i])))
-			#This will alter all the necessary ingredients in the step
+						list_of_altered_ingredients.append(
+							tuple((self.ingredients[list_of_seasonings[i]], mexican_seasonings[i])))
+			# This will alter all the necessary ingredients in the step
 			for alter in list_of_altered_ingredients:
-				(old,new) = alter
+				(old, new) = alter
 				old_name = old['name']
 				for ing in range(0, len(self.ingredients)):
 					if self.ingredients[ing]['name'] == old_name:
 						self.ingredients[ing]['name'] = new['name']
 						self.ingredients[ing]['type'] = new['type']
-						#These are commented out because we don't want to to change any of the quantitys or measurements
-						#self.ingredients[ing]['quantity'] = new['quantity']
-						#self.ingredients[ing]['measurement'] = new['measurement']
+						# These are commented out because we don't want to to change any of the quantitys or measurements
+						# self.ingredients[ing]['quantity'] = new['quantity']
+						# self.ingredients[ing]['measurement'] = new['measurement']
 						self.ingredients[ing]['descriptors'] = new['descriptors']
 						self.ingredients[ing]['prep'] = new['prep']
 				for x in range(0, len(self.steps)):
 					if old_name.lower() in self.steps[x].text.lower():
 						for k in old:
 							if 'name' == k:
-								self.steps[x].text = self.steps[x].text.lower().replace(str(old_name), str(new['name']).upper())
+								self.steps[x].text = self.steps[x].text.lower().replace(str(old_name),
+																						str(new['name']).upper())
 							else:
-								self.steps[x].text = self.steps[x].text.replace(str(old[k]), str(new[k]))	
+								self.steps[x].text = self.steps[x].text.replace(str(old[k]), str(new[k]))
 					else:
 						old_name_split = old_name.split()
 						for name in old_name_split:
-							#print(name)
+							# print(name)
 							if name in self.steps[x].text.lower():
-								#print("in step")
+								# print("in step")
 								for k in old:
 									if 'name' == k:
-										self.steps[x].text = self.steps[x].text.lower().replace(str(name), str(new['name']).upper())
-										#self.steps[x].text = self.steps[x].text.replace(str(name), '')
+										self.steps[x].text = self.steps[x].text.lower().replace(str(name), str(
+											new['name']).upper())
+									# self.steps[x].text = self.steps[x].text.replace(str(name), '')
 									else:
-										self.steps[x].text = self.steps[x].text.replace(str(old[k]), str(new[k]))							
+										self.steps[x].text = self.steps[x].text.replace(str(old[k]), str(new[k]))
 					for k in new:
 						variable = str(new[k]).upper()
 						re1 = r'(' + variable + r' )' + r'\1+'
 						self.steps[x].text = re.sub(re1, r'\1', self.steps[x].text)
 						self.steps[x].text = self.steps[x].text.replace(str(new[k]).upper(), str(new[k]))
 
-			#If no conversions were identified, we will simply add to the pre-existing recipe
+			# If no conversions were identified, we will simply add to the pre-existing recipe
 			if len(list_of_altered_ingredients) == 0:
 				print("hey, we couldn't find any specific ingredients we would want to transform")
 				print("so we thought we should just add a side to your requested recipe")
@@ -605,12 +738,20 @@ def get_recipe_url(num=259356):
 if __name__ == '__main__':
 
 	# Some valid recipes
-	urls = [9023, 259356, 20002, 237496, 16318, 228285]
+	urls = [9023, 259356, 20002, 237496, 16318, 228285, 24712, 54492, 218628, 19283]
 
 	# Printing vegetarian conversions
-	for url in urls[1:2]:
+	for url in urls[9:]:
 		recipe = Recipe(get_recipe_url(url))
 		# print(recipe.vegetarian())
 		print(recipe.text)
-		for x in recipe.steps:
-			print(x)
+		for ing in recipe.ingredients:
+			print(ing)
+
+		recipe.more_healthy()
+		print(recipe.recipe_name)
+		for ing in recipe.ingredients:
+			print(ing)
+		for steps in recipe.steps:
+			print(steps.new_text)
+		print(recipe.changes)

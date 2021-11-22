@@ -376,83 +376,209 @@ class Recipe:
 					ing['quantity'] = ing['quantity'] * 2.0
 					new_change = "Doubled the quantity of " + ing['name'] + " to make recipe less healthy"
 					self.changes.append(new_change)
-
-	def toMexican(self):
-		print("you are in to Mexican")
+	def mainActions(self):
 		potential_main_actions = []
 		for step in self.steps:
 			each_step = step.text.split()
 			potential_main_actions.append(each_step[0])
-		print(potential_main_actions)
-		main_action = []
+		#print(potential_main_actions)
+		main_actions = []
 		for potential in potential_main_actions:
 			if potential.lower() in data.cooking_methods:
 				main_action.append(potential)
-		print(main_action)
-		#if 'bake' in main_action:
-		#html_title = "Mexican Inspired: " + html_title
-		#print(html_title)
-		list_of_altered_ingredients = []
-		ingredients = self.get_ingredients()
-		if self.isDessert:
-			print("dessert")
+		return main_actions
+	
+	def toMexican(self):
+		if self.isMexican == True:
+			print("Hey, Wow, Looking at the meta data (and the title) it seems like this recipie is already Mexican")
+			print("perhaps you would like to try a different one of our recipe conversions, I hear they are swell.")
 		else:
+			self.isMexican = True
+			print("Original Recipe: " + self.recipe_name)
+			print("Original Ingredients:")
+			for ingredient in self.ingredients:
+				print(ingredient)
+			print("Original Steps:")
+			for step in self.steps:
+				print(step.text)
+			print("Convert To Mexican")
+			print("Mexican Interpretation of: " + self.recipe_name)
+			
+			ingredients = self.get_ingredients()
+			list_of_altered_ingredients = []
 			list_of_seasonings = []
 			list_of_starches = []
+			list_of_proteins = []
+			list_of_sauces = []
+			list_of_cheeses = []
+			list_of_milks = []
+			list_of_fruits = []
+
+			#Identify things of interest
 			for diction in self.ingredients:
-				print(diction['type'])
+				if diction['type'] == 'protein':
+					list_of_proteins.append(self.ingredients.index(diction))
 				if diction['type'] == 'seasoning':
 					list_of_seasonings.append(self.ingredients.index(diction))
 				if diction['type'] == 'starch':
 					list_of_starches.append(self.ingredients.index(diction))
-			print(list_of_seasonings)
-			print(list_of_starches)
-			list_of_altered_ingredients = []
-			if self.isSandwich:
-				for star in list_of_starches:
-					self.ingredients[star]['name'] = 'French bread'
-					self.ingredients[star]['measurement'] = 'loaf'
-					print(self.ingredients[star])
-					torta = data.mexican_bread[0]
-					if self.ingredients[star]['quantity'] != 0:
-						torta['quantity'] = self.ingredients[star]['quantity']
-					if self.ingredients[star]['measurement'] != 'whole':
-						torta['measurement'] = self.ingredients[star]['measurement']
-					list_of_altered_ingredients.append(tuple((self.ingredients[star],torta)))
+				if diction['type'] == 'sauce':
+					list_of_sauces.append(self.ingredients.index(diction))
+				if diction['type'] == 'fruit':
+					list_of_fruits.append(self.ingredients.index(diction))
+
+			if self.isDessert:
+				#Changing Seasonings
+				mds = data.mexican_dessert_seasonings
+				for m in mds:
+					for seasoning in list(list_of_seasonings):
+						if m['name'] in self.ingredients[seasoning]['name']:
+							mds = [x for x in mds if x.get('name') != m['name']]
+							list_of_seasonings.remove(seasoning)
+				for i in range(0, len(list_of_seasonings)):
+					if i >= len(mds):
+						break
+					else:
+						list_of_altered_ingredients.append(tuple((self.ingredients[list_of_seasonings[i]], mds[i])))
+
+				mfs = data.mexican_fruits
+				for m in mfs:
+					for fruit in list(list_of_fruits):
+						if m['name'] in self.ingredients[fruit]['name']:
+							mfs = [x for x in mfs if x.get('name') != m['name']]
+							list_of_fruits.remove(fruit)
+				for i in range(0, len(list_of_fruits)):
+					if i >= len(mds):
+						break
+					else:
+						list_of_altered_ingredients.append(tuple((self.ingredients[list_of_fruits[i]], mds[i])))	
+				#Replacing a milk with Tres Leches	
+				for protein in list_of_proteins:
+					if 'milk' in self.ingredients[protein]['name']:
+						list_of_milks.append(protein)
+				if len(list_of_milks) > 0:
+					list_of_altered_ingredients.append(tuple((self.ingredients[list_of_milks[0]], data.mexican_tres_leches[0])))
+
+			else:
+				#Adding Salsa if a sauce was used.
+				if len(list_of_sauces) > 0:
+					list_of_altered_ingredients.append(tuple((self.ingredients[list_of_sauces[0]],data.mexican_salsa[0])))
+
+				#Changing Starches (Sandwich Breads to Torta) and (All other starches, make one Rice)
+				if self.isSandwich:
+					for star in list_of_starches:
+						torta = data.mexican_bread[0]
+						#if self.ingredients[star]['quantity'] != 0:
+						#	torta['quantity'] = self.ingredients[star]['quantity']
+						#if self.ingredients[star]['measurement'] != 'whole':
+						#	torta['measurement'] = self.ingredients[star]['measurement']
+						list_of_altered_ingredients.append(tuple((self.ingredients[star],torta)))
+				else:
+					if len(list_of_starches) > 0:
+						replacement_starch = data.mexican_rice[0]
+						list_of_altered_ingredients.append(tuple((self.ingredients[list_of_starches[0]],replacement_starch)))
+
+				#Changing Meats and identifying cheeses
+				for protein in list_of_proteins:
+					if 'beef' in self.ingredients[protein]['name']:
+						carne_asada = data.mexican_protein[2]
+						#if self.ingredients[protein]['quantity'] != 0:
+						#	carne_asada['quantity'] = self.ingredients[protein]['quantity']
+						#if self.ingredients[protein]['measurement'] != 0:
+						#	carne_asada['measurement'] = self.ingredients[protein]['measurement']
+						list_of_altered_ingredients.append(tuple((self.ingredients[protein], carne_asada)))
+					if 'pork' in self.ingredients[protein]['name']:
+						alpastor = data.mexican_protein[0]
+						list_of_altered_ingredients.append(tuple((self.ingredients[protein],alpastor)))
+					if 'cheese' in self.ingredients[protein]['name']:
+						list_of_cheeses.append(protein)
+
+				#Changing Cheeses
+				mx_cheese = data.mexican_cheese
+				for mex in mx_cheese:
+					for che in list(list_of_cheeses):
+						if mex['name'] in self.ingredients[che]['name']:
+							mx_cheese = [x for x in mx_cheese if x.get('name') != mex['name']]
+							list_of_cheeses.remove(che)
+				for i in range(0, len(list_of_cheeses)):
+					if i >= len(mx_cheese):
+						break
+					else:
+						list_of_altered_ingredients.append(tuple((self.ingredients[list_of_cheeses[i]], mx_cheese[i])))
+			
+				#Changing Seasonings
+				mexican_seasonings = data.mexican_seasonings
+				print("SEASONINGS")
+				for mex in mexican_seasonings:
+					print(mex)
+					for seasoning in list(list_of_seasonings):
+						if mex['name'] in self.ingredients[seasoning]['name']:
+							mexican_seasonings = [x for x in mexican_seasonings if x.get('name') != mex['name']]
+							list_of_seasonings.remove(seasoning)
+				for i in range(0, len(list_of_seasonings)):
+					if i >= len(mexican_seasonings):
+						break
+					else:
+						list_of_altered_ingredients.append(tuple((self.ingredients[list_of_seasonings[i]], mexican_seasonings[i])))
+			#This will alter all the necessary ingredients in the step
 			for alter in list_of_altered_ingredients:
 				(old,new) = alter
 				old_name = old['name']
-				print(old_name)
-				print(new['name'])
-				old_name_split = old_name.split()
+				for ing in range(0, len(self.ingredients)):
+					if self.ingredients[ing]['name'] == old_name:
+						self.ingredients[ing]['name'] = new['name']
+						self.ingredients[ing]['type'] = new['type']
+						#These are commented out because we don't want to to change any of the quantitys or measurements
+						#self.ingredients[ing]['quantity'] = new['quantity']
+						#self.ingredients[ing]['measurement'] = new['measurement']
+						self.ingredients[ing]['descriptors'] = new['descriptors']
+						self.ingredients[ing]['prep'] = new['prep']
 				for x in range(0, len(self.steps)):
-					for name in old_name_split:
-						print(name)
-						if name in self.steps[x].text:
-							#print("in step")
-							for k in old:
-								if 'name' == k:
-									self.steps[x].text = self.steps[x].text.replace(str(name), str(new['name']).upper())
-								else:
-									self.steps[x].text = self.steps[x].text.replace(str(old[k]), str(new[k]))							
-							#if str(old['measurement']) in self.steps[x].text:
-							#	self.steps[x].text = self.steps[x].text.replace(str(old['measurement']), str(new['measurement']))
-							#if str(old['quantity']) in self.steps[x].text:
-							#	self.steps[x].text = self.steps[x].text.replace(str(old['quantity']), str(new['quantity']))
-							#if str(old['prep']) in self.steps[x].text:
-							#	self.steps[x].text = self.steps[x].text.replace(str(old['prep']), str(new['prep']))
+					if old_name.lower() in self.steps[x].text.lower():
+						for k in old:
+							if 'name' == k:
+								self.steps[x].text = self.steps[x].text.lower().replace(str(old_name), str(new['name']).upper())
+							else:
+								self.steps[x].text = self.steps[x].text.replace(str(old[k]), str(new[k]))	
+					else:
+						old_name_split = old_name.split()
+						for name in old_name_split:
+							#print(name)
+							if name in self.steps[x].text.lower():
+								#print("in step")
+								for k in old:
+									if 'name' == k:
+										self.steps[x].text = self.steps[x].text.lower().replace(str(name), str(new['name']).upper())
+										#self.steps[x].text = self.steps[x].text.replace(str(name), '')
+									else:
+										self.steps[x].text = self.steps[x].text.replace(str(old[k]), str(new[k]))							
 					for k in new:
-						print(k)
 						variable = str(new[k]).upper()
 						re1 = r'(' + variable + r' )' + r'\1+'
 						self.steps[x].text = re.sub(re1, r'\1', self.steps[x].text)
 						self.steps[x].text = self.steps[x].text.replace(str(new[k]).upper(), str(new[k]))
-							#self.steps[x].text = re.sub(r'([A-Z])\1+', r'\1', self.steps[x].text)
-							#self.steps[x].text = re.sub(re.escape(variable) + r'\1+', r'\1', self.steps[x].text)
-							#self.steps[x].text = re.sub(r'(TORTA BREAD )\1+', r'\1', self.steps[x].text)
 
+			#If no conversions were identified, we will simply add to the pre-existing recipe
+			if len(list_of_altered_ingredients) == 0:
+				print("hey, we couldn't find any specific ingredients we would want to transform")
+				print("so we thought we should just add a side to your requested recipe")
+				if self.isDessert:
+					for ing in data.mexican_acl_ing:
+						self.ingredients.append(ing)
+					for step in data.mexican_acl_steps:
+						self.steps.append(str(step))
+				else:
+					for ing in data.mexican_elote_ing:
+						self.ingredients.append(ing)
+					for step in data.mexican_elote_steps:
+						self.steps.append(str(step))
+			for ingredient in self.ingredients:
+				print(ingredient)
 			for step in self.steps:
-				print(step.text)
+				if isinstance(step, str):
+					print(step)
+				else:
+					print(step.text)
 
 	# Returns a step graph
 	def get_steps(self):

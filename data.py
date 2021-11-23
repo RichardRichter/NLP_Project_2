@@ -73,7 +73,7 @@ mexican_seasonings = [{'name': 'cilantro', 'type': 'seasoning', 'quantity': 1 , 
 {'name': 'salt', 'type': 'seasoning', 'quantity': .0, 'measurement': 'to taste', 'descriptors': [''], 'prep': ['']},
 {'name': 'pepper', 'type': 'seasoning', 'quantity': .0, 'measurement': 'to taste', 'descriptors': [''], 'prep': ['']}
 ]
-mexican_bread = [{'name': 'torta bread', 'type': 'starch', 'quantity': 1, 'measurement': 'whole', 'descriptors': ['steamy'], 'prep': ['sliced into pieces']}]
+mexican_bread = [{'name': 'torta bread', 'type': 'starch', 'quantity': 1, 'measurement': 'whole', 'descriptors': [''], 'prep': ['']}]
 
 mexican_fruits = [{'name': 'mango', 'type': 'fruit', 'quantity': 3 , 'measurement': 'whole', 'descriptors': [''], 'prep': ['']},
 {'name': 'strawberry', 'type': 'fruit', 'quantity': 8 , 'measurement': 'whole', 'descriptors': [''], 'prep': ['']},

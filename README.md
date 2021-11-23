@@ -14,25 +14,28 @@ You will be asked to provide a url from allrecipes.com, once you enter the recip
 After the recipe is printed, you will be select a choice of whether to output the in-depth details of the ingredients and steps of the recipe, perform a specific transformation, or quit/terminate the program. Provide the respective number from 0-8 that matches what you want to do.
 
 <h3>More in detail about what each option does</h3>
-<b>0. Print Parsed Ingredients and Steps from Original Recipe</b>
+<b>0. Print Parsed Ingredients and Steps from Original Recipe</b><br />
   This option will print our internal representation of ingredients and steps.<br />
-  An individual ingredient is represented as a dictionary with these keys: name (string)<br />
-                                                                           type (string)<br />
-                                                                           quantity (float)<br />
-                                                                           measurement (string)<br />
-                                                                           descriptors(list of strings)<br />
-                                                                           prep(list of strings)<br />
+  An individual ingredient is represented as a dictionary with these keys:<br />
+  name (string)<br />
+  type (string)<br />
+  quantity (float)<br />
+  measurement (string)<br />
+  descriptors(list of strings)<br />
+  prep(list of strings)<br />
+  <br />
   The recipe's ingredients is represented as a list of these ingredient dictionaries.<br />
- 
-  A single step corresponds to one sentence in the original instructions of the recipe. It is represented as a Step class object with internal class variables.
-  The relevant internal class variables are: text (string that represents the original text of the instruction)
-                                             actions (list of strings for each action happening in the step)
-                                             ingredients (list of strings for each ingredient in this step)
-                                             tools (list of strings for each tool used in this step)
-                                             new_text (string that contains the new instructions after performing a transformation, this is initalized to be same as text)
- <br>
-<b>1-7. Transforma the recipe in some way
-  These options will change our internal representation of the recipe to match the desired transformation and then output the changed recipe starting from the title. 
-  After the transformed recipe is printed, there will be a section printed denoting the changes made to the recipe for the transformation. 
-  Note that some transformations can be trivial, for example transforming a recipe that is already vegetarian to vegetarian will not do anything.
+  <br />
+  A single step corresponds to one sentence in the original instructions of the recipe. It is represented as a Step class object with internal class variables. <br />
+  The relevant internal class variables are: <br />
+  text (string that represents the original text of the instruction)<br />
+  actions (list of strings for each action happening in the step)<br />
+  ingredients (list of strings for each ingredient in this step)<br />
+  tools (list of strings for each tool used in this step)<br />
+  new_text (string that contains the new instructions after performing a transformation, this is initalized to be same as text)<br />
+ <br />
+<b>1-7 Transforma the recipe in some way</b><br />
+  These options will change our internal representation of the recipe to match the desired transformation and then output the changed recipe starting from the title.<br />
+  After the transformed recipe is printed, there will be a section printed denoting the changes made to the recipe for the transformation.<br />
+  Note that some transformations can be trivial, for example transforming a recipe that is already vegetarian to vegetarian will not do anything.<br />
  

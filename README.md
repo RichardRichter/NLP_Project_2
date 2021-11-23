@@ -14,16 +14,15 @@ You will be asked to provide a url from allrecipes.com, once you enter the recip
 After the recipe is printed, you will be select a choice of whether to output the in-depth details of the ingredients and steps of the recipe, perform a specific transformation, or quit/terminate the program. Provide the respective number from 0-8 that matches what you want to do.
 
 <h3>More in detail about what each option does<h3>
-<br>
 <b>0. Print Parsed Ingredients and Steps from Original Recipe<b>
-  This option will print our internal representation of ingredients and steps.
-  An individual ingredient is represented as a dictionary with these keys: name (string)
-                                                                           type (string)
-                                                                           quantity (float)
-                                                                           measurement (string)
-                                                                           descriptors(list of strings)
-                                                                           prep(list of strings)
-  The recipe's ingredients is represented as a list of these ingredient dictionaries.
+  This option will print our internal representation of ingredients and steps.<br>
+  An individual ingredient is represented as a dictionary with these keys: name (string)<br>
+                                                                           type (string)<br>
+                                                                           quantity (float)<br>
+                                                                           measurement (string)<br>
+                                                                           descriptors(list of strings)<br>
+                                                                           prep(list of strings)<br>
+  The recipe's ingredients is represented as a list of these ingredient dictionaries.<br>
  
   A single step corresponds to one sentence in the original instructions of the recipe. It is represented as a Step class object with internal class variables.
   The relevant internal class variables are: text (string that represents the original text of the instruction)

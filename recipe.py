@@ -129,6 +129,9 @@ class Recipe:
 		self.ingredients, self.unknown, self.ingredient_indices = self.get_ingredients()
 		self.text = [div.text for div in self.soup.find_all('div', {'class': 'paragraph'})]
 		self.steps = self.get_steps()
+		self.tools = self.named_tools()
+		self.potential_main_actions = self.pmActions()
+		self.main_actions = self.mActions()
 		# check categories of recipe
 		self.isVegetarian = False
 		self.isMexican = False
@@ -155,10 +158,7 @@ class Recipe:
 				self.isMexican = True
 			if 'vegetarian' in item:
 				self.isVegetarian = True
-		# print("Sandwich: ", self.isSandwich)
-		# print("Veggie: ", self.isVegetarian)
-		# print("Mexican: ", self.isMexican)
-		# print("Dessert: ", self.isDessert)
+
 	def find_tags(self):
 		find_tag_list = self.soup.find('script', id='karma-loader')
 		find_tag_list = str(find_tag_list).split()
@@ -174,6 +174,45 @@ class Recipe:
 		    if 'tags:' == item:
 		        append_to_list = True
 		return tags
+	#Identifies Potential Main Actions:
+	def pmActions(self):
+		first_words = []
+		potential_main_actions = []
+		for step in self.steps:
+			each_step = step.text.split()
+			first_words.append(each_step[0])
+		for word in first_words:
+			if word.lower() in data.cooking_methods:
+				potential_main_actions.append(word)
+		pma = []
+		for i in potential_main_actions:
+			if i.lower() not in pma:
+				pma.append(i.lower())
+		return pma
+	#Identifies Likely main actions
+	def mActions(self):
+		action_list = ['cook', 'bake', 'fry', 'roast', 'grill', 'steam', 'poach', 'simmer', 'broil', 'blanch', 'braise', 'stew']
+		main_actions = []
+		for action in self.potential_main_actions:
+			if action.lower() in action_list:
+				main_actions.append(action)
+		ma = []
+		for i in main_actions:
+			if i.lower() not in ma:
+				ma.append(i.lower())
+		return ma
+	def named_tools(self):
+		tools = []
+		for step in self.steps:
+			for tool in data.tools:
+				if tool in step.text:
+					tools.append(tool)
+		t = []
+		for i in tools:
+			if i.lower() not in t:
+				t.append(i.lower())
+		return t
+
 	def update_ingredient_indices(self):
 		self.ingredient_indices = {}
 		for i in range(len(self.ingredients)):
@@ -313,6 +352,7 @@ class Recipe:
 			index += 1
 
 		return ingredients, unknown, ingredient_indices
+
 
 	# Given a vulgar fraction string, returns a float
 	def convert_fraction(self, string_fraction):
@@ -604,18 +644,6 @@ class Recipe:
 			half = initial / 2
 			self.ingredients[x]['quantity'] = half
 
-	def mainActions(self):
-		potential_main_actions = []
-		for step in self.steps:
-			each_step = step.text.split()
-			potential_main_actions.append(each_step[0])
-		# print(potential_main_actions)
-		main_actions = []
-		for potential in potential_main_actions:
-			if potential.lower() in data.cooking_methods:
-				main_action.append(potential)
-		return main_actions
-
 	def toMexican(self):
 		if self.isMexican == True:
 			print("Hey, Wow, Looking at the meta data (and the title) it seems like this recipe is already Mexican")
@@ -780,6 +808,11 @@ class Recipe:
 						re1 = r'(' + variable + r' )' + r'\1+'
 						self.steps[x].new_text = re.sub(re1, r'\1', self.steps[x].new_text)
 						self.steps[x].new_text = self.steps[x].new_text.replace(str(new[k]).upper(), str(new[k]))
+						variable = str(new[k])
+						re2 = r'(' + variable + r' )' + r'\1+'
+						self.steps[x].new_text = re.sub(re2, r'\1', self.steps[x].new_text)
+						#self.steps[x].new_text = self.steps[x].new_text.replace(str(new[k]).upper(), str(new[k]))
+
 
 			# If no conversions were identified, we will simply add to the pre-existing recipe
 			if len(list_of_altered_ingredients) == 0:
@@ -856,6 +889,35 @@ class Recipe:
 		self.output_steps()
 		print('')
 
+	def output_tools_and_actions(self):
+		print('')
+		print(self.recipe_name)
+		print('')
+		print("We Identifed These tools:")
+		if len(self.tools) == 0:
+			print("Sorry No Tools Identified")
+		else:
+			for tool in self.tools:
+				print(tool.lower(), end=", ")
+		if len(self.potential_main_actions) == 0:
+			print(" ")
+			print("Sorry No Potentail Main Actions Identified")
+			print("Sorry No Main Actions Identified")
+		else:
+			print(" ")
+			print("We Identified these potential main actions:")
+			for pa in self.potential_main_actions:
+				print(pa.lower(), end=", ")
+			if len(self.main_actions) == 0:
+				print(" ")
+				print("Sorry from these potential actions, we did not identify the main action")
+			else:
+				print(" ")
+				print("Here are the primary main actions we have found:")
+				for ma in self.main_actions:
+					print(ma.lower(), end=", ")
+		print('')
+		print('')
 
 # Returns a valid recipe url based on an integer input
 def get_recipe_url(num=259356):
@@ -875,6 +937,7 @@ def main():
 			url = input()
 
 		recipe = Recipe(url)
+		recipe.output_tools_and_actions()
 		recipe.output_recipe()
 		transformation_choices = [str(i) for i in range(1, 9)]
 		menu_options = "Select Desired Transformation:\n1: Make recipe vegetarian\n2: Make recipe non-vegetarian\n" \

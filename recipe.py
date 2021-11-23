@@ -628,6 +628,8 @@ class Recipe:
 			initial = self.ingredients[x]['quantity']
 			double = initial * 2
 			self.ingredients[x]['quantity'] = double
+		new_change = "All cooking times have been multiplied by 1.5"
+		self.changes.append(new_change)
 
 	def toHalf(self):
 		self.recipe_name = "Halved " + self.recipe_name
@@ -666,6 +668,8 @@ class Recipe:
 			initial = self.ingredients[x]['quantity']
 			half = initial / 2
 			self.ingredients[x]['quantity'] = half
+		new_change = "All cooking times have been divided by 1.5"
+		self.changes.append(new_change)
 
 	def toMexican(self):
 		if self.isMexican == True:

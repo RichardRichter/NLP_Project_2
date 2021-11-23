@@ -12,7 +12,7 @@ run python recipe.py
 You will be asked to provide a url from allrecipes.com, once you enter the recipe a drop down menu of the Title of the Recipe you uploaded, a list of tools, a list of actions and a list of main actions will appear. Then the recipes original ingredients and original steps will be printed. 
 
 After the recipe is printed, you will be select a choice of whether to output the in-depth details of the ingredients and steps of the recipe, perform a specific transformation, or quit/terminate the program. Provide the respective number from 0-8 that matches what you want to do.
-
+<pre>
 <h3>More in detail about what each option does</h3>
 <b>0. Print Parsed Ingredients and Steps from Original Recipe</b><br />
   This option will print our internal representation of ingredients and steps.<br />
@@ -34,8 +34,9 @@ After the recipe is printed, you will be select a choice of whether to output th
   tools (list of strings for each tool used in this step)<br />
   new_text (string that contains the new instructions after performing a transformation, this is initalized to be same as text)<br />
  <br />
-<b>1-7 Transforma the recipe in some way</b><br />
+<b>1-7 Transform the recipe in some way</b><br />
   These options will change our internal representation of the recipe to match the desired transformation and then output the changed recipe starting from the title.<br />
   After the transformed recipe is printed, there will be a section printed denoting the changes made to the recipe for the transformation.<br />
   Note that some transformations can be trivial, for example transforming a recipe that is already vegetarian to vegetarian will not do anything.<br />
  
+ </pre>

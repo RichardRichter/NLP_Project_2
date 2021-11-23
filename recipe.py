@@ -588,6 +588,31 @@ class Recipe:
 					ing['quantity'] = ing['quantity'] * 2.0
 					new_change = "Doubled the quantity of " + ing['name'] + " to make recipe less healthy"
 					self.changes.append(new_change)
+			if ing['type'] == 'protein':
+				if ing['name'] in data.lean_proteins:
+					old = ing['name']
+					ing['name'] = 'beef'
+					new_changed = "Changed " + old + " to beef, that lean protein had to go!"
+					self.changes.append(new_change)
+			if ing['name'] in data.fats:
+				if ing['quantity'] == 0.0:
+					continue
+				else:
+					ing['quantity'] = ing['quantity'] * 2.0
+					new_change = "Doubled the quantity of " + ing['name'] + " to make recipe less healthy"
+					self.changes.append(new_change)	
+		if len(self.changes) == 0:
+			print("Recipe was already pretty unhealthy, but hey lets still make it more unhealthy")
+			if self.isDessert:
+				new_change = "Added Marshmellows"
+				self.changes.append(new_change)
+				self.ingredients.append(data.marshmellow[0])
+				self.steps.append(str(data.marshmellow_step[0]))
+			else:
+				new_change = "Added Crispy Fried Onions"
+				self.changes.append(new_change)
+				self.ingredients.append(data.fried_onions[0])
+				self.steps.append(str(data.fried_onions_step[0]))
 
 	def toDouble(self):
 		self.recipe_name = "Doubled " + self.recipe_name

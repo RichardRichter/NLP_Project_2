@@ -135,6 +135,7 @@ class Recipe:
 		self.isDessert = False
 		self.isSandwich = False
 		self.changes = []
+		self.tags = self.find_tags()
 		span_headers = self.soup.find_all('span', {'class': 'breadcrumbs__title'})
 		for title in span_headers:
 			if 'sandwich' in title.text.lower():
@@ -145,11 +146,34 @@ class Recipe:
 				self.isMexican = True
 			if 'vegetarian' in title.text.lower():
 				self.isVegetarian = True
+		for item in self.tags:
+			if 'sandwich' in item:
+				self.isSandwich = True
+			if 'desserts' in item:
+				self.isDessert = True
+			if 'mexican' in item:
+				self.isMexican = True
+			if 'vegetarian' in item:
+				self.isVegetarian = True
 		# print("Sandwich: ", self.isSandwich)
 		# print("Veggie: ", self.isVegetarian)
 		# print("Mexican: ", self.isMexican)
 		# print("Dessert: ", self.isDessert)
-
+	def find_tags(self):
+		find_tag_list = self.soup.find('script', id='karma-loader')
+		find_tag_list = str(find_tag_list).split()
+		append_to_list = False
+		tags = []
+		for item in find_tag_list:
+		    item = item.replace('"','')
+		    item = item.replace(',','')
+		    if append_to_list and '[' not in item:  
+		        if ']' in item:
+		            break
+		        tags.append(item)
+		    if 'tags:' == item:
+		        append_to_list = True
+		return tags
 	def update_ingredient_indices(self):
 		self.ingredient_indices = {}
 		for i in range(len(self.ingredients)):
@@ -503,83 +527,78 @@ class Recipe:
 					self.changes.append(new_change)
 
 	def toDouble(self):
+		self.recipe_name = "Doubled " + self.recipe_name
+		find_serving = self.soup.find('div', class_='recipe-adjust-servings__original-serving')
+		serving = find_serving.text
+		print(serving)
+		serving_number = int(re.sub("[^0-9]", "", str(serving)))
+		double_serving = int(serving_number * 2)
+		serving = serving.replace(str(serving_number), str(double_serving))
+		serving = serving.replace("Original", "Doubled")
+		print(serving)
 		pattern_s = re.compile(r'\d+ second')
 		pattern_m = re.compile(r'\d+ minute')
 		pattern_h = re.compile(r'\d+ hour')
 		list_of_patterns = [pattern_s, pattern_m, pattern_h]
-		print("Original Ingredients")
-		for ingredient in self.ingredients:
-			print(ingredient)
-		print("Original Recipe")
-		for step in self.steps:
-			print(step.text)
 		for ingredient in self.ingredients:
 			for y in range(0, len(self.steps)):
 				name_split = ingredient['name'].split()
 				for name in name_split:
-					if name in self.steps[y].text:
+					if name in self.steps[y].new_text:
 						re1 = str(ingredient['quantity']) + " " + ingredient['measurement'] + " " + name
 						double = ingredient['quantity'] * 2
 						new_value = str(double) + " " + str(ingredient['measurement']) + " " + str(name)
-						self.steps[y].text = re.sub(re1, new_value, self.steps[y].text)
+						self.steps[y].new_text = re.sub(re1, new_value, self.steps[y].new_text)
 				# self.steps[y].text = self.steps[y].text.replace(str(int(ingredient['quantity'])), str(double))
 		for y in range(0, len(self.steps)):
 			for pattern in list_of_patterns:
-				if pattern.search(self.steps[y].text):
-					values_to_change = re.findall(pattern, self.steps[y].text)
+				if pattern.search(self.steps[y].new_text):
+					values_to_change = re.findall(pattern, self.steps[y].new_text)
 					for x in range(0, len(list(values_to_change))):
 						replace_value = int(re.sub("[^0-9]", "", values_to_change[x]))
 						greater_value = int(replace_value * 1.5)
-						self.steps[y].text = self.steps[y].text.replace(str(replace_value), str(greater_value))
+						self.steps[y].new_text = self.steps[y].new_text.replace(str(replace_value), str(greater_value))
+		self.steps.append("Repeat Steps 1-" + str(len(self.steps)) + " as you see fit")
 		for x in range(0, len(self.ingredients)):
 			initial = self.ingredients[x]['quantity']
 			double = initial * 2
 			self.ingredients[x]['quantity'] = double
-		print("New Ingredients")
-		for ingredient in self.ingredients:
-			print(ingredient)
-		print("Altered Steps")
-		for step in self.steps:
-			print(step.text)
 
 	def toHalf(self):
+		self.recipe_name = "Halved " + self.recipe_name
+		find_serving = self.soup.find('div', class_='recipe-adjust-servings__original-serving')
+		serving = find_serving.text
+		print(serving)
+		serving_number = int(re.sub("[^0-9]", "", str(serving)))
+		half_serving = serving_number / 2
+		serving = serving.replace(str(serving_number), str(half_serving))
+		serving = serving.replace("Original", "Halved")
+		print(serving)
 		pattern_s = re.compile(r'\d+ second')
 		pattern_m = re.compile(r'\d+ minute')
 		pattern_h = re.compile(r'\d+ hour')
 		list_of_patterns = [pattern_s, pattern_m, pattern_h]
-		print("Original Ingredients")
-		for ingredient in self.ingredients:
-			print(ingredient)
-		print("Original Recipe")
-		for step in self.steps:
-			print(step.text)
 		for ingredient in self.ingredients:
 			for y in range(0, len(self.steps)):
 				name_split = ingredient['name'].split()
 				for name in name_split:
-					if name in self.steps[y].text:
+					if name in self.steps[y].new_text:
 						re1 = str(ingredient['quantity']) + " " + ingredient['measurement'] + " " + name
 						half = ingredient['quantity'] / 2
 						new_value = str(half) + " " + str(ingredient['measurement']) + " " + str(name)
-						self.steps[y].text = re.sub(re1, new_value, self.steps[y].text)
+						self.steps[y].new_text = re.sub(re1, new_value, self.steps[y].new_text)
 		for y in range(0, len(self.steps)):
 			for pattern in list_of_patterns:
-				if pattern.search(self.steps[y].text):
-					values_to_change = re.findall(pattern, self.steps[y].text)
+				if pattern.search(self.steps[y].new_text):
+					values_to_change = re.findall(pattern, self.steps[y].new_text)
 					for x in range(0, len(list(values_to_change))):
 						replace_value = int(re.sub("[^0-9]", "", values_to_change[x]))
 						lesser_value = int(replace_value / 1.5)
-						self.steps[y].text = self.steps[y].text.replace(str(replace_value), str(lesser_value))
+						self.steps[y].new_text = self.steps[y].new_text.replace(str(replace_value), str(lesser_value))
 		for x in range(0, len(self.ingredients)):
 			initial = self.ingredients[x]['quantity']
 			half = initial / 2
 			self.ingredients[x]['quantity'] = half
-		print("New Ingredients")
-		for ingredient in self.ingredients:
-			print(ingredient)
-		print("Altered Steps")
-		for step in self.steps:
-			print(step.text)
 
 	def mainActions(self):
 		potential_main_actions = []
@@ -599,15 +618,7 @@ class Recipe:
 			print("perhaps you would like to try a different one of our recipe conversions, I hear they are swell.")
 		else:
 			self.isMexican = True
-			print("Original Recipe: " + self.recipe_name)
-			print("Original Ingredients:")
-			for ingredient in self.ingredients:
-				print(ingredient)
-			print("Original Steps:")
-			for step in self.steps:
-				print(step.text)
-			print("Convert To Mexican")
-			print("Mexican Interpretation of: " + self.recipe_name)
+			self.recipe_name = "Mexican Interpretation of: " + self.recipe_name
 
 			ingredients = self.get_ingredients()
 			list_of_altered_ingredients = []
@@ -716,9 +727,7 @@ class Recipe:
 
 				# Changing Seasonings
 				mexican_seasonings = data.mexican_seasonings
-				print("SEASONINGS")
 				for mex in mexican_seasonings:
-					print(mex)
 					for seasoning in list(list_of_seasonings):
 						if mex['name'] in self.ingredients[seasoning]['name']:
 							mexican_seasonings = [x for x in mexican_seasonings if x.get('name') != mex['name']]
@@ -727,8 +736,7 @@ class Recipe:
 					if i >= len(mexican_seasonings):
 						break
 					else:
-						list_of_altered_ingredients.append(
-							tuple((self.ingredients[list_of_seasonings[i]], mexican_seasonings[i])))
+						list_of_altered_ingredients.append(tuple((self.ingredients[list_of_seasonings[i]], mexican_seasonings[i])))
 			# This will alter all the necessary ingredients in the step
 			for alter in list_of_altered_ingredients:
 				(old, new) = alter
@@ -743,31 +751,29 @@ class Recipe:
 						self.ingredients[ing]['descriptors'] = new['descriptors']
 						self.ingredients[ing]['prep'] = new['prep']
 				for x in range(0, len(self.steps)):
-					if old_name.lower() in self.steps[x].text.lower():
+					space_checker = " " + old_name.lower()
+					if space_checker in self.steps[x].text.lower():
 						for k in old:
 							if 'name' == k:
-								self.steps[x].text = self.steps[x].text.lower().replace(str(old_name),
-																						str(new['name']).upper())
+								self.steps[x].new_text = self.steps[x].new_text.lower().replace(str(old_name), str(new['name']).upper())
 							else:
-								self.steps[x].text = self.steps[x].text.replace(str(old[k]), str(new[k]))
+								self.steps[x].new_text = self.steps[x].new_text.replace(str(old[k]), str(new[k]))
 					else:
 						old_name_split = old_name.split()
 						for name in old_name_split:
-							# print(name)
-							if name in self.steps[x].text.lower():
+							space_checker = " " + name
+							if space_checker in self.steps[x].text.lower():
 								# print("in step")
 								for k in old:
 									if 'name' == k:
-										self.steps[x].text = self.steps[x].text.lower().replace(str(name), str(
-											new['name']).upper())
-									# self.steps[x].text = self.steps[x].text.replace(str(name), '')
+										self.steps[x].new_text = self.steps[x].new_text.lower().replace(str(name), str(new['name']).upper())
 									else:
-										self.steps[x].text = self.steps[x].text.replace(str(old[k]), str(new[k]))
+										self.steps[x].new_text = self.steps[x].new_text.replace(str(old[k]), str(new[k]))
 					for k in new:
 						variable = str(new[k]).upper()
 						re1 = r'(' + variable + r' )' + r'\1+'
-						self.steps[x].text = re.sub(re1, r'\1', self.steps[x].text)
-						self.steps[x].text = self.steps[x].text.replace(str(new[k]).upper(), str(new[k]))
+						self.steps[x].new_text = re.sub(re1, r'\1', self.steps[x].new_text)
+						self.steps[x].new_text = self.steps[x].new_text.replace(str(new[k]).upper(), str(new[k]))
 
 			# If no conversions were identified, we will simply add to the pre-existing recipe
 			if len(list_of_altered_ingredients) == 0:
@@ -783,13 +789,6 @@ class Recipe:
 						self.ingredients.append(ing)
 					for step in data.mexican_elote_steps:
 						self.steps.append(str(step))
-			for ingredient in self.ingredients:
-				print(ingredient)
-			for step in self.steps:
-				if isinstance(step, str):
-					print(step)
-				else:
-					print(step.text)
 
 	# Returns a step graph
 	def get_steps(self):
@@ -833,7 +832,10 @@ class Recipe:
 		print("Instructions:")
 		counter = 1
 		for step in self.steps:
-			print(str(counter) + '. ' + step.new_text)
+			if isinstance(step, str):
+				print(str(counter) + '. ' + step)
+			else:
+				print(str(counter) + '. ' + step.new_text)
 			counter += 1
 
 	def output_recipe(self):
@@ -854,47 +856,57 @@ def get_recipe_url(num=259356):
 
 def main():
 	print("Welcome to Jason, Nathan, and Ricky's Recipe Parser")
-	print("Please input the url for the allrecipes recipe to parse:")
-	url = input()
-	while 'allrecipes.com/recipe/' not in url:
-		print("This doesn't seem to be an allrecipes.com url. Try again.")
+	still_interested = True
+	while still_interested == True:
+		print("Please input the url for the allrecipes recipe to parse:")
 		url = input()
+		while 'allrecipes.com/recipe/' not in url:
+			print("This doesn't seem to be an allrecipes.com url. Try again.")
+			url = input()
 
-	recipe = Recipe(url)
-	recipe.output_recipe()
-	transformation_choices = [str(i) for i in range(1, 9)]
-	menu_options = "Select Desired Transformation:\n1: Make recipe vegetarian\n2: Make recipe non-vegetarian\n" \
-				   "3: Make recipe more healthy\n4: Make recipe less healthy\n" \
-				   "5: Make recipe Mexican\n6: Double quantity of recipe\n7: Half quantity of recipe\n8: Quit"
-	print(menu_options)
-	choice = input()
-	while choice not in transformation_choices:
-		print("This is an invalid transformation choice. Please choose again.")
+		recipe = Recipe(url)
+		recipe.output_recipe()
+		transformation_choices = [str(i) for i in range(1, 9)]
+		menu_options = "Select Desired Transformation:\n1: Make recipe vegetarian\n2: Make recipe non-vegetarian\n" \
+					   "3: Make recipe more healthy\n4: Make recipe less healthy\n" \
+					   "5: Make recipe Mexican\n6: Double quantity of recipe\n7: Half quantity of recipe\n8: Quit"
 		print(menu_options)
 		choice = input()
+		while choice not in transformation_choices:
+			print("This is an invalid transformation choice. Please choose again.")
+			print(menu_options)
+			choice = input()
+		print()
+		selected_choice = int(choice)
+		if selected_choice == 1:
+			recipe.to_vegetarian()
+		elif selected_choice == 2:
+			recipe.from_vegetarian()
+		elif selected_choice == 3:
+			recipe.more_healthy()
+		elif selected_choice == 4:
+			recipe.less_healthy()
+		elif selected_choice == 5:
+			recipe.toMexican()
+		elif selected_choice == 6:
+			recipe.toDouble()
+		elif selected_choice == 7:
+			recipe.toHalf()
+		elif selected_choice == 8:
+			return
 
-	selected_choice = int(choice)
-	if selected_choice == 1:
-		recipe.to_vegetarian()
-	elif selected_choice == 2:
-		recipe.from_vegetarian()
-	elif selected_choice == 3:
-		recipe.more_healthy()
-	elif selected_choice == 4:
-		recipe.less_healthy()
-	elif selected_choice == 5:
-		recipe.toMexican()
-	elif selected_choice == 6:
-		recipe.toDouble()
-	elif selected_choice == 7:
-		recipe.toHalf()
-	elif selected_choice == 8:
-		return
+		recipe.output_recipe()
+		print("Changes made to original recipe:")
+		for i, change in enumerate(recipe.changes):
+			print(str(i+1) + '. ' + change)
 
-	recipe.output_recipe()
-	print("Changes made to original recipe:")
-	for i, change in enumerate(recipe.changes):
-		print(str(i+1) + '. ' + change)
+		print()
+		print("Please press 1 if you have a new recipe you would like to transform")
+		print("Press any other button to end your journey")
+		continue_choice = input()
+		if int(continue_choice) != 1:
+			print("Okay the process is over")
+			still_interested = False
 
 
 if __name__ == '__main__':

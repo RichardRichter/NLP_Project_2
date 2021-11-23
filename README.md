@@ -2,7 +2,10 @@
 
 <h2>Error Read more bytes:</h2>
 
-Sometimes, we have had an issue with using beautiful soup, where once you input a url from allrecipes.com, an error pops up saying a reading error occured, (Read more bytes, etc.). We have found that by simply running the code again with the same url the code works as its supposed to. So if you come up with that error, just run the code again. 
+Sometimes, we have had an issue with using beautiful soup, where once you input a url from allrecipes.com, an error pops up saying a reading error occured:
+(raise IncompleteRead(data, amt-len(data))<br />
+http.client.IncompleteRead: IncompleteRead(339382 bytes read, 57603 more expected).
+We have found that by simply running the code again with the same url the code works as its supposed to. So if you come up with that error, just run the code again. 
 
 
 <h2>How to run our project:</h2>

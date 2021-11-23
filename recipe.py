@@ -418,7 +418,7 @@ class Recipe:
 			for ing, ind in self.ingredient_indices.items():
 				if self.ingredients[ind]['type'] == 'protein':
 					for meat in data.meat_proteins:
-						if meat in ing:
+						if meat in ing.lower() and 'broth' not in ing.lower():
 							ingredient = copy.deepcopy(self.ingredients[ind])
 							# whole chicken or measurement not in mass, so change unit of measurement to mass
 							if ingredient['measurement'] not in data.mass_measurements:
@@ -466,12 +466,23 @@ class Recipe:
 							self.update_ingredient_indices()
 							# found the matched meat so stop
 							break
+						# case for meat broths
+						elif meat in ing.lower() and 'broth' in ing.lower():
+							ingredient = copy.deepcopy(self.ingredients[ind])
+							self.ingredients[ind]['name'] = 'vegetable broth'
+							for i, step in enumerate(self.steps):
+								if ingredient['name'] in step.new_text:
+									self.steps[i].new_text = self.steps[i].new_text.replace(ingredient['name'], 'vegetable broth')
+							new_changes = "Replaced " + ingredient['name'] + " with vegetable broth to make recipe vegetarian"
+							self.changes.append(new_changes)
+							break
+
 
 			# Cleaning the steps of those words
 			if len(meats_found) > 0:
 				steps = self.clean_substeps(data.meat_words)
 				tofu_index = self.ingredient_indices['tofu']
-				# Replacing chicken w/ tofu
+				# Replacing meat w/ tofu
 				for i, step in enumerate(self.steps):
 					for meats in meats_found:
 						meat_words = meats['name'].split()
@@ -495,11 +506,22 @@ class Recipe:
 					self.changes.append(new_change)
 			else:
 				self.isVegetarian = True
-				new_change = "Couldn't find any meats in the ingredients. The recipe has now been labeled vegetarian and no changes have been made"
-				self.changes.append(new_change)
+				# self.changes will be empty only if no meat broths were found and replaced with vegetable broth
+				if len(self.changes) == 0:
+					new_change = "Couldn't find any meats in the ingredients. The recipe has now been labeled vegetarian and no changes have been made"
+					self.changes.append(new_change)
 
 	# Changes recipe to be non-vegetarian, if it already isn't
 	def from_vegetarian(self):
+		meats_found = []
+		for ing, ind in self.ingredient_indices.items():
+			if self.ingredients[ind]['type'] == 'protein':
+				for meat in data.meat_proteins:
+					if meat in ing:
+						meats_found.append(self.ingredients[ind])
+		# Sometimes the site's metadeta doesn't have the vegetarian tag, so we have to manually check for meats
+		if len(meats_found) == 0:
+			self.isVegetarian = True
 		if not self.isVegetarian:
 			new_change = "No change was made because recipe is already non-vegetarian"
 			self.changes.append(new_change)
@@ -528,6 +550,7 @@ class Recipe:
 			self.steps.append(new_step)
 			self.isVegetarian = False
 			new_change = "Added ground chicken to the recipe to make it non-vegetarian."
+			self.recipe_name = self.recipe_name + "With A Side Of Ground Chicken"
 			self.changes.append(new_change)
 
 	# Make recipe more healthy, currently done by halving quantities of all seasoning

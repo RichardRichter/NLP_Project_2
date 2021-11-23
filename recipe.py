@@ -28,10 +28,10 @@ class Recipe:
 				self.new_text = ''
 				self.conditions = None
 			else:
-				self.text = sentence
+				self.text = ' '.join([self.convert_fraction(x) for x in sentence.split()])
 				self.tokens = nlp(sentence)
 				self.actions, self.ingredients, self.tools, self.valid = self.get_info()
-				self.new_text = sentence
+				self.new_text = ' '.join([self.convert_fraction(x) for x in sentence.split()])
 				self.conditions = None
 
 		def __str__(self):
@@ -117,6 +117,35 @@ class Recipe:
 			tools = list(set(tools))
 
 			return actions, ingredients, tools
+		
+		def convert_fraction(self, word):
+			if self.is_vulgar_fraction(word[-1]):
+		
+				number = unicodedata.numeric(word[-1])
+				if len(word) > 1:
+					if word[:-2].isnumeric():
+						number += float(word[:-2])
+					else:
+						return word
+		
+				return str(int(number)) if number%1==0 else str(round(float(number), 2))
+		
+			elif re.match(r'[0-9]+/[0-9]+', word):
+				word = word.split('/')
+				return str(round(float(word[0]) / float(word[1]), 2))
+		
+			return word
+		
+		def is_vulgar_fraction(self, character):
+			try:
+				unicodedata.numeric(character)
+				try:
+					float(character)
+					return False
+				except ValueError:
+					return True
+			except ValueError:
+				return False
 
 	def __init__(self, url):
 		html_doc = request.urlopen(url)

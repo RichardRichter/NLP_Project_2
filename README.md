@@ -11,14 +11,28 @@ run python recipe.py
 
 You will be asked to provide a url from allrecipes.com, once you enter the recipe a drop down menu of the Title of the Recipe you uploaded, a list of tools, a list of actions and a list of main actions will appear. Then the recipes original ingredients and original steps will be printed. 
 
-We interpreted the directions such that the API's pre_ceremony function would be run first, followed by the autograder, followed by the API's main function. We were hesitant to change any of the parameters in the function signature, so we did processing for both 2013 and 2015 within pre_ceremony rather than doing it on a per year basis (which would require the addition of a 'year' parameter in the function signature). As such, if an additional year is to be tested, 3 function calls must be added in pre_ceremony for that year. These are (in order):
- - extraction.save_tweets(year, 'ggyear.json')
- - categories.save_awards(year)
- - tweet_miner.main(year)
+After the recipe is printed, you will be select a choice of whether to output the in-depth details of the ingredients and steps of the recipe, perform a specific transformation, or quit/terminate the program. Provide the respective number from 0-8 that matches what you want to do.
 
-These are required to allow the API to have access to answers for any given year. Our tweet_miner function automatically produces both a .json and human-readable .txt output. Consequently, our main function simply reads the text that is already outputted to the .txt file.
-
-Our program was designed to run in the following order:
-- ggapi.pre_ceremony (We dont call this manually. We assumed that the grader would call this on their own as it says in the description that it would be run first. It is imperative that this function be called before the autograder is run, or before any calls to the other API functions are made)
-- autograder (Should be run for all years)
-- ggapi.main
+<h3>More in detail about what each option does<h3>
+<b>0. Print Parsed Ingredients and Steps from Original Recipe<b>
+  This option will print our internal representation of ingredients and steps.
+  An individual ingredient is represented as a dictionary with these keys: name (string)
+                                                                           type (string)
+                                                                           quantity (float)
+                                                                           measurement (string)
+                                                                           descriptors(list of strings)
+                                                                           prep(list of strings)
+  The recipe's ingredients is represented as a list of these ingredient dictionaries.
+ 
+  A single step corresponds to one sentence in the original instructions of the recipe. It is represented as a Step class object with internal class variables.
+  The relevant internal class variables are: text (string that represents the original text of the instruction)
+                                             actions (list of strings for each action happening in the step)
+                                             ingredients (list of strings for each ingredient in this step)
+                                             tools (list of strings for each tool used in this step)
+                                             new_text (string that contains the new instructions after performing a transformation, this is initalized to be same as text)
+ 
+<b>1-7. Transforma the recipe in some way
+  These options will change our internal representation of the recipe to match the desired transformation and then output the changed recipe starting from the title. 
+  After the transformed recipe is printed, there will be a section printed denoting the changes made to the recipe for the transformation. 
+  Note that some transformations can be trivial, for example transforming a recipe that is already vegetarian to vegetarian will not do anything.
+ 

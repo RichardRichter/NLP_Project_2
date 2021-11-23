@@ -30,11 +30,13 @@ vegetables = ['amaranth leaves','amaranth','arrowroot','artichoke','arugula','as
 
 fruits = ['acerola', 'west indian cherry', 'apple', 'apricots', 'avocado', 'banana', 'blackberry', 'blackcurrant', 'blueberry', 'breadfruit', 'cantaloupe', 'carambola', 'cherimoya', 'cherry', 'clementine', 'coconut', 'coconut meat', 'cranberry', 'custard-apple', 'date', 'date fruit', 'durian', 'elderberry', 'feijoa', 'fig', 'gooseberry', 'grapefruit', 'grape', 'guava', 'honeydew melon', 'melon', 'jackfruit', 'java-plum', 'plum', 'jujube fruit', 'kiwi', 'kiwifruit', 'kumquat', 'lemon', 'lime', 'lingonberry', 'longan', 'loquat', 'lychee', 'mandarin', 'mandarin orange', 'mango', 'mangosteen', 'mulberry', 'nectarine', 'olive', 'orange', 'papaya', 'passion fruit', 'peach', 'pear', 'persimmon', 'pitaya', 'dragonfruit', 'pineapple', 'pitanga', 'plantain', 'pomegranate', 'prickly pear', 'prune', 'pummelo', 'quince', 'raspberry', 'rhubarb', 'rose-apple', 'sapodilla', 'mamey sapote', 'sapote', 'soursop', 'strawberry', 'sugar-apple', 'tamarind', 'tangerine', 'watermelon']
 
-seasonings = ['allspice','angelica','anise','asafoetida','bay leaf','basil','bergamot','black cumin','black mustard','black pepper','borage','brown mustard','burnet','caraway','cardamom','cassia','catnip','cayenne pepper','celery seed','chervil','chicory','chili pepper','chives','cicely','cilantro','cinnamon','clove','coriander','costmary','cumin','curry','dill','fennel','fenugreek','filé','ginger','grains of paradise','holy basil','horehound','horseradish','hyssop','lavender','lemon balm','lemon grass','lemon verbena','licorice','lovage','mace','marjoram', 'mustard', 'nutmeg','oregano','paprika','parsley','peppermint','poppy seed','rosemary','rue','saffron','sage','savory','sesame','sorrel','star anise','spearmint','tarragon','thyme','turmeric','vanilla','wasabi','white mustard','salt', 'pepper', 'paste', 'lemon juice', 'lime juice', 'soy sauce', 'juice', 'zest', 'garlic', 'flakes', 'syrup', 'molasses', 'balsamic', 'sugar', 'extract', 'mayo', 'mayonnaise']
+seasonings = ['allspice','angelica','anise','asafoetida','bay leaf','basil','bergamot','black cumin','black mustard','black pepper','borage','brown mustard','burnet','caraway','cardamom','cassia','catnip','cayenne pepper','celery seed','chervil','chicory','chili pepper','chives','cicely','cilantro','cinnamon','clove','coriander','costmary','cumin','curry','dill','fennel','fenugreek','filé','ginger','grains of paradise','holy basil','horehound','horseradish','hyssop','lavender','lemon balm','lemon grass','lemon verbena','licorice','lovage','mace','marjoram', 'mustard', 'nutmeg','oregano','paprika','parsley','peppermint','poppy seed','rosemary','rue','saffron','sage','savory','sesame','sorrel','star anise','spearmint','tarragon','thyme','turmeric','vanilla','wasabi','white mustard','salt', 'pepper', 'paste', 'lemon juice', 'lime juice', 'soy sauce', 'juice', 'zest', 'garlic', 'flakes', 'syrup', 'molasses', 'balsamic', 'sugar', 'extract']
 
 binders = ['egg', 'cracker', 'cracker crumb', 'oatmeal', 'rice', 'milk', 'evaporated milk', 'gelatin', 'guar gum', 'xanthan gum', 'psyllium husk', 'potato starch', 'cornstarch']
 
 starches = ['ciabatta', 'french bread', 'whole wheat bread', 'sourdough', 'rye bread', 'pita bread', 'focaccia', 'multigrain', 'brioche', 'bread', 'waffle', 'english muffin', 'dough', 'flour', 'pasta', 'noodle', 'pastry']
+
+sauces = ['sauce', 'mayo', 'mayonnaise']
 
 meat_words = ['bone', 'skin', 'blood', 'juice run', 'juices run', 'pink', 'meat', 'cavity', 'thigh', 'breast', 'fish']
 
@@ -47,7 +49,7 @@ ingredients_list = {
 	'binder': binders,
 	'starch': starches,
 	'fruit': fruits,
-	'sauce': ['sauce']
+	'sauce': sauces
 }
 
 all_ingredients = [item for k in ingredients_list for item in ingredients_list[k]]
@@ -73,7 +75,7 @@ mexican_seasonings = [{'name': 'cilantro', 'type': 'seasoning', 'quantity': 1 , 
 {'name': 'salt', 'type': 'seasoning', 'quantity': .0, 'measurement': 'to taste', 'descriptors': [''], 'prep': ['']},
 {'name': 'pepper', 'type': 'seasoning', 'quantity': .0, 'measurement': 'to taste', 'descriptors': [''], 'prep': ['']}
 ]
-mexican_bread = [{'name': 'torta bread', 'type': 'starch', 'quantity': 1, 'measurement': 'whole', 'descriptors': [''], 'prep': ['']}]
+mexican_bread = [{'name': 'torta bread', 'type': 'starch', 'quantity': 1, 'measurement': 'slices', 'descriptors': [''], 'prep': ['']}]
 
 mexican_fruits = [{'name': 'mango', 'type': 'fruit', 'quantity': 3 , 'measurement': 'whole', 'descriptors': [''], 'prep': ['']},
 {'name': 'strawberry', 'type': 'fruit', 'quantity': 8 , 'measurement': 'whole', 'descriptors': [''], 'prep': ['']},

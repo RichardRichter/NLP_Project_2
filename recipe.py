@@ -592,7 +592,6 @@ class Recipe:
 					self.changes.append(new_change)
 					ing['name'] = 'granulated honey'
 					ing['descriptors'] = []
-					print(old_sugar)
 					for i, step in enumerate(self.steps):
 						self.steps[i].new_text = self.steps[i].new_text.replace(old_sugar, 'granulated honey')
 						self.steps[i].new_text = self.steps[i].new_text.replace('sugar', 'honey')
@@ -603,8 +602,17 @@ class Recipe:
 					new_change = "Halved the quantity of " + ing['name'] + " to make recipe more healthy"
 					self.changes.append(new_change)
 		if len(self.changes) == 0:
-			new_change= "There's no seasonings in the recipe, so it's quite healthy already. Maybe you can eat some fruit as well?"
-			self.changes.append(new_change)
+			print("There's no seasonings in the recipe, so it's quite healthy already. Let's add some healthier things.")
+			if self.isDessert:
+				new_change = "Added Banana Slices"
+				self.changes.append(new_change)
+				self.ingredients.append(data.banana[0])
+				self.steps.append(str(data.banana_step[0]))
+			else:
+				new_change = "Added Avocado Slices"
+				self.changes.append(new_change)
+				self.ingredients.append(data.avocado[0])
+				self.steps.append(str(data.avocado_step[0]))
 
 	# Make recipe less healthy, currently done by doubling quantities of all seasoning
 	def less_healthy(self):
@@ -621,7 +629,10 @@ class Recipe:
 				if ing['name'] in data.lean_proteins:
 					old = ing['name']
 					ing['name'] = 'beef'
-					new_changed = "Changed " + old + " to beef, that lean protein had to go!"
+					for i, step in enumerate(self.steps):
+						if old in step.text:
+							self.steps[i].new_text = self.steps[i].new_text.replace(old, 'beef')
+					new_change = "Changed " + old + " to beef, that lean protein had to go!"
 					self.changes.append(new_change)
 			if ing['name'] in data.fats:
 				if ing['quantity'] == 0.0:
@@ -629,7 +640,7 @@ class Recipe:
 				else:
 					ing['quantity'] = ing['quantity'] * 2.0
 					new_change = "Doubled the quantity of " + ing['name'] + " to make recipe less healthy"
-					self.changes.append(new_change)	
+					self.changes.append(new_change)
 		if len(self.changes) == 0:
 			print("Recipe was already pretty unhealthy, but hey lets still make it more unhealthy")
 			if self.isDessert:

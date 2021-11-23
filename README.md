@@ -14,6 +14,7 @@ You will be asked to provide a url from allrecipes.com, once you enter the recip
 After the recipe is printed, you will be select a choice of whether to output the in-depth details of the ingredients and steps of the recipe, perform a specific transformation, or quit/terminate the program. Provide the respective number from 0-8 that matches what you want to do.
 
 <h3>More in detail about what each option does<h3>
+<br>
 <b>0. Print Parsed Ingredients and Steps from Original Recipe<b>
   This option will print our internal representation of ingredients and steps.
   An individual ingredient is represented as a dictionary with these keys: name (string)
@@ -30,7 +31,7 @@ After the recipe is printed, you will be select a choice of whether to output th
                                              ingredients (list of strings for each ingredient in this step)
                                              tools (list of strings for each tool used in this step)
                                              new_text (string that contains the new instructions after performing a transformation, this is initalized to be same as text)
- 
+ <br>
 <b>1-7. Transforma the recipe in some way
   These options will change our internal representation of the recipe to match the desired transformation and then output the changed recipe starting from the title. 
   After the transformed recipe is printed, there will be a section printed denoting the changes made to the recipe for the transformation. 

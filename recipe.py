@@ -945,6 +945,15 @@ class Recipe:
 					print(ma.lower(), end=", ")
 		print('')
 		print('')
+	def parsed_ing_and_steps(self):
+		print('Parsed Ingredients:')
+		for ing in self.ingredients:
+			print(ing)
+		print('')
+		print('Parsed Steps:')
+		for step in self.steps:
+			print(step)
+		print('')
 
 # Returns a valid recipe url based on an integer input
 def get_recipe_url(num=259356):
@@ -966,8 +975,8 @@ def main():
 		recipe = Recipe(url)
 		recipe.output_tools_and_actions()
 		recipe.output_recipe()
-		transformation_choices = [str(i) for i in range(1, 9)]
-		menu_options = "Select Desired Transformation:\n1: Make recipe vegetarian\n2: Make recipe non-vegetarian\n" \
+		transformation_choices = [str(i) for i in range(0, 9)]
+		menu_options = "Select Desired Transformation:\n0: Print Parsed Ingredients and Steps from Original Recipe\n1: Make recipe vegetarian\n2: Make recipe non-vegetarian\n" \
 					   "3: Make recipe more healthy\n4: Make recipe less healthy\n" \
 					   "5: Make recipe Mexican\n6: Double quantity of recipe\n7: Half quantity of recipe\n8: Quit"
 		print(menu_options)
@@ -978,7 +987,9 @@ def main():
 			choice = input()
 		print()
 		selected_choice = int(choice)
-		if selected_choice == 1:
+		if selected_choice == 0:
+			recipe.parsed_ing_and_steps()
+		elif selected_choice == 1:
 			recipe.to_vegetarian()
 		elif selected_choice == 2:
 			recipe.from_vegetarian()

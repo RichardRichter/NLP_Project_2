@@ -560,6 +560,8 @@ class Recipe:
 						self.steps[y].new_text = self.steps[y].new_text.replace(str(replace_value), str(greater_value))
 		self.steps.append("Repeat Steps 1-" + str(len(self.steps)) + " as you see fit")
 		for x in range(0, len(self.ingredients)):
+			new_change = "Doubled the amount of " + self.ingredients[x]['name']
+			self.changes.append(new_change)
 			initial = self.ingredients[x]['quantity']
 			double = initial * 2
 			self.ingredients[x]['quantity'] = double
@@ -596,6 +598,8 @@ class Recipe:
 						lesser_value = int(replace_value / 1.5)
 						self.steps[y].new_text = self.steps[y].new_text.replace(str(replace_value), str(lesser_value))
 		for x in range(0, len(self.ingredients)):
+			new_change = "Halved the amount of " + self.ingredients[x]['name']
+			self.changes.append(new_change)
 			initial = self.ingredients[x]['quantity']
 			half = initial / 2
 			self.ingredients[x]['quantity'] = half
@@ -740,6 +744,8 @@ class Recipe:
 			# This will alter all the necessary ingredients in the step
 			for alter in list_of_altered_ingredients:
 				(old, new) = alter
+				new_change = "Replaced " + old['name'] + " with " + new['name']
+				self.changes.append(new_change)
 				old_name = old['name']
 				for ing in range(0, len(self.ingredients)):
 					if self.ingredients[ing]['name'] == old_name:
@@ -902,9 +908,9 @@ def main():
 
 		print()
 		print("Please press 1 if you have a new recipe you would like to transform")
-		print("Press any other button to end your journey")
+		print("Press any other number button to end your journey")
 		continue_choice = input()
-		if int(continue_choice) != 1:
+		if continue_choice != str(1):
 			print("Okay the process is over")
 			still_interested = False
 

@@ -26,7 +26,7 @@ vegetarian_proteins = ['milk', 'yogurt', 'yoghurt', 'cheese', 'cottage cheese', 
 
 meat_proteins = ['beef', 'lamb', 'veal', 'pork', 'kangaroo', 'chicken', 'turkey', 'duck', 'emu', 'goose', 'bush birds', 'fish', 'prawn', 'crab', 'lobster', 'mussels', 'oyster', 'scallop', 'clams', 'shrimp', 'bacon', 'cod', 'halibut', 'salmon', 'tilapia', 'pork chop', 'protien powder', 'tenderloin', 'turkey bacon']
 
-lean_proteins = ['duck', 'emu', 'goose', 'bush birds', 'fish', 'prawn', 'crab', 'lobster', 'mussels', 'oyster', 'scallop', 'clams', 'shrimp', 'cod', 'halibut', 'salmon', 'tilapia']
+lean_proteins = ['duck', 'emu', 'goose', 'bush birds', 'chicken', 'turkey', 'pheasant', 'rabbit']
 
 nuts_and_seeds = ['nut', 'seed', 'pecan', 'hazelnut', 'coconut', 'almond', 'chestnut', 'macadamia', 'cashew', 'walnut', 'peanut', 'peanut butter']
 
@@ -150,7 +150,14 @@ mexican_acl_ing = [{'name': 'water', 'type': 'cooking_medium', 'quantity': 4, 'm
 ]
 mexican_acl_steps = ['Now for to add the side Arroz Con Leche', 'Combine water and cinnamon stick in a saucepan over high heat', 'Bring to a boil and cook until cinnamon releases its color and flavor, about 5 minutes', 'Add rice, reduce heat to low, cover, and cook until rice is tender and water is absorbed, about 20 minutes','Gradually add whole milk to rice, then evaporated milk', 'Stir in sugar', 'Cook uncovered until sugar is dissolved and mixture has thickened, about 10 minutes']
 
-marshmellow = [{'name': 'Jumbo Marshmellows', 'type': 'starch', 'quantity': 1, 'measurement': 'bag', 'descriptors': [''], 'prep': ['']}]
-marshmellow_step = ['Add Jumbo Marshmellows on top of your finished dessert and enjoy!']
-fried_onions = [{'name': 'Crisy Fried Onions', 'type': 'starch', 'quantity': 24, 'measurement': 'ounces', 'descriptors': [''], 'prep': ['']}]
-fried_onions_step = ['Pour Crispy Fried Onion Bits all over your meal and enjoy!']
+marshmellow = [{'name': 'jumbo marshmellows', 'type': 'starch', 'quantity': 1, 'measurement': 'bag', 'descriptors': [''], 'prep': ['']}]
+marshmellow_step = ['Add jumbo marshmellows on top of your finished dessert and enjoy!']
+
+banana = [{'name': 'banana', 'type': 'fruit', 'quantity': 5, 'measurement': 'slices', 'descriptors': [''], 'prep': ['']}]
+banana_step = ['Add banana slices on top of your finished dessert and enjoy!']
+
+fried_onions = [{'name': 'crisy fried onions', 'type': 'starch', 'quantity': 24, 'measurement': 'ounces', 'descriptors': [''], 'prep': ['']}]
+fried_onions_step = ['Pour crispy fried onion bits all over your meal and enjoy!']
+
+avocado = [{'name': 'avacado', 'type': 'fruit', 'quantity': 12, 'measurement': 'slices', 'descriptors': [''], 'prep': ['']}]
+avocado_step = ['Pour avacoda slices all over your meal and enjoy!']

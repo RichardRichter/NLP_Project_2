@@ -41,3 +41,5 @@ After the recipe is printed, you will be select a choice of whether to output th
   After the transformed recipe is printed, there will be a section printed denoting the changes made to the recipe for the transformation.<br />
   Note that some transformations can be trivial, for example transforming a recipe that is already vegetarian to vegetarian will not do anything.<br />
  
+<h2>After one transformation</h2>
+  Because only one transformation is done on a recipe, you are prompted to either put in a new url for another recipe (put the same url as before if you want to perform a different transformation on the different recipe) or exit the program.

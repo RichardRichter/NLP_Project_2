@@ -326,7 +326,7 @@ class Recipe:
 
 		# Validating measurements
 		if ingredient['measurement'] not in data.measurements:
-			name = ingredient['measurement'] + ' ' + ingredient['name']
+			name = ingredient['measurement'] + ' ' + str(ingredient['name'])
 			for word in name.split():
 				if word in data.measurements or word[:-1] in data.measurements:
 					ingredient['measurement'] = 'to taste' if word == 'to|taste' else word
@@ -782,15 +782,20 @@ class Recipe:
 						self.steps[x].new_text = self.steps[x].new_text.replace(str(new[k]).upper(), str(new[k]))
 
 			# If no conversions were identified, we will simply add to the pre-existing recipe
+			list_of_altered_ingredients = []
 			if len(list_of_altered_ingredients) == 0:
 				print("hey, we couldn't find any specific ingredients we would want to transform")
 				print("so we thought we should just add a side to your requested recipe")
 				if self.isDessert:
+					new_change = "Added simple Arroz Con Leche Ingredients and Steps"
+					self.changes.append(new_change)
 					for ing in data.mexican_acl_ing:
 						self.ingredients.append(ing)
 					for step in data.mexican_acl_steps:
 						self.steps.append(str(step))
 				else:
+					new_change = "Added simple Elote Ingredients and Steps"
+					self.changes.append(new_change)
 					for ing in data.mexican_elote_ing:
 						self.ingredients.append(ing)
 					for step in data.mexican_elote_steps:

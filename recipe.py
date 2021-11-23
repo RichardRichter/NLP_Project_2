@@ -782,7 +782,6 @@ class Recipe:
 						self.steps[x].new_text = self.steps[x].new_text.replace(str(new[k]).upper(), str(new[k]))
 
 			# If no conversions were identified, we will simply add to the pre-existing recipe
-			list_of_altered_ingredients = []
 			if len(list_of_altered_ingredients) == 0:
 				print("hey, we couldn't find any specific ingredients we would want to transform")
 				print("so we thought we should just add a side to your requested recipe")

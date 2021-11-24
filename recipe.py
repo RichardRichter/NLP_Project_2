@@ -1003,12 +1003,17 @@ class Recipe:
 						cream_count += 1
 						list_of_altered_ingredients.append(tuple((old_name, self.ingredients[i]['name'])))
 			if 'butter' in self.ingredients[i]['name']:
-				if self.ingredients[i]['name'] not in data.avoid_butters:
-					old_name = self.ingredients[i]['name']
-					self.ingredients[i]['name'] = 'clarified butter'
-					new_change = "Changed Butter Product to Clarified Butter, which has less lactose"
-					self.changes.append(new_change)
-					list_of_altered_ingredients.append(tuple((old_name, self.ingredients[i]['name'])))
+				dont_convert = False
+				for butter in data.avoid_butters:
+					if butter in self.ingredients[i]['name']:
+						dont_convert = True
+				if dont_convert == False:
+					if butter in self.ingredients[i]['name']:
+						old_name = self.ingredients[i]['name']
+						self.ingredients[i]['name'] = 'clarified butter'
+						new_change = "Changed Butter Product to Clarified Butter, which has less lactose"
+						self.changes.append(new_change)
+						list_of_altered_ingredients.append(tuple((old_name, self.ingredients[i]['name'])))
 			if list_of_altered_ingredients == 0:
 				print("NO Lactose was found")
 			else:
@@ -1031,6 +1036,7 @@ class Recipe:
 						variable = str(new_name)
 						re2 = r'(' + variable + r' )' + r'\1+'
 						self.steps[x].new_text = re.sub(re2, r'\1', self.steps[x].new_text)
+
 	# Returns a step graph
 	def get_steps(self):
 		steps = [div.text for div in self.soup.find_all('div', {'class': 'paragraph'})]

@@ -41,7 +41,7 @@ After the recipe is printed, you will be select a choice of whether to output th
   <li>tools (list of strings for each tool used in this step)</li>
   <li>new_text (string that contains the new instructions after performing a transformation, this is initalized to be same as text)<br />
   </ul>
-<h3>1-7. Transform the recipe in some way</h3>
+<h3>1-8. Transform the recipe in some way</h3>
   These options will change our internal representation of the recipe to match the desired transformation and then output the changed recipe starting from the title.<br />
   After the transformed recipe is printed, there will be a section printed denoting the changes made to the recipe for the transformation.<br />
   Note that some transformations can be trivial, for example transforming a recipe that is already vegetarian to vegetarian will not do anything.<br />

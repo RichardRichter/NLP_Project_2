@@ -20,11 +20,11 @@ cooking_mediums = ['water', 'olive oil', 'butter', 'vegetable oil', 'margarine']
 
 fats = ['olive oil', 'butter', 'vegetable oil', 'margarine', 'oil', 'lard']
 
-proteins = ['beef', 'lamb', 'veal', 'pork', 'kangaroo', 'chicken', 'turkey', 'duck', 'emu', 'goose', 'fish', 'prawn', 'crab', 'lobster', 'mussels', 'oyster', 'scallop', 'clams', 'shrimp', 'milk', 'yogurt', 'yoghurt', 'cheese', 'cottage cheese', 'almond', 'pine nut', 'walnut', 'macadamia', 'hazelnut', 'cashew', 'pumpkin seed', 'sesame seed', 'sunflower seed', 'bean', 'lentil', 'chickpea', 'split pea', 'tofu', 'bacon', 'chia seed', 'egg', 'egg whites', 'cod', 'halibut', 'salmon', 'tilapia', 'hemp seed', 'hummus', 'peanut butter', 'peanut', 'pork chop', 'whey', 'protien powder', 'tenderloin', 'refried bean', 'turkey bacon', 'bush birds']
+proteins = ['beef', 'lamb', 'veal', 'pork', 'kangaroo', 'chicken', 'turkey', 'duck', 'emu', 'goose', 'fish', 'prawn', 'crab', 'lobster', 'mussels', 'oyster', 'scallop', 'clams', 'shrimp', 'milk', 'yogurt', 'yoghurt', 'cheese', 'cottage cheese', 'almond', 'pine nut', 'walnut', 'macadamia', 'hazelnut', 'cashew', 'pumpkin seed', 'sesame seed', 'sunflower seed', 'bean', 'lentil', 'chickpea', 'split pea', 'tofu', 'bacon', 'chia seed', 'egg', 'egg whites', 'cod', 'halibut', 'salmon', 'sardine', 'tilapia', 'hemp seed', 'hummus', 'peanut butter', 'peanut', 'pork chop', 'whey', 'protien powder', 'tenderloin', 'refried bean', 'turkey bacon', 'bush birds']
 
 vegetarian_proteins = ['milk', 'yogurt', 'yoghurt', 'cheese', 'cottage cheese', 'almond', 'pine nut', 'walnut', 'macadamia', 'hazelnut', 'cashew', 'pumpkin seed', 'sesame seed', 'sunflower seed', 'bean', 'lentil', 'chickpea', 'split pea', 'tofu', 'chia seed', 'egg', 'egg whites', 'hemp seed', 'hummus', 'peanut butter', 'peanut', 'whey', 'protein powder', 'refried bean']
 
-meat_proteins = ['beef', 'lamb', 'veal', 'pork', 'kangaroo', 'chicken', 'turkey', 'duck', 'emu', 'goose', 'bush birds', 'fish', 'prawn', 'crab', 'lobster', 'mussels', 'oyster', 'scallop', 'clams', 'shrimp', 'bacon', 'cod', 'halibut', 'salmon', 'tilapia', 'pork chop', 'protien powder', 'tenderloin', 'turkey bacon']
+meat_proteins = ['beef', 'lamb', 'veal', 'pork', 'kangaroo', 'chicken', 'turkey', 'duck', 'emu', 'goose', 'bush birds', 'fish', 'prawn', 'crab', 'lobster', 'mussels', 'oyster', 'scallop', 'clams', 'shrimp', 'bacon', 'cod', 'halibut', 'salmon', 'tilapia', 'pork chop', 'protien powder', 'tenderloin', 'turkey bacon', 'sardine']
 
 lean_proteins = ['duck', 'emu', 'goose', 'bush birds', 'chicken', 'turkey', 'pheasant', 'rabbit']
 

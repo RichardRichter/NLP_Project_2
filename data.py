@@ -43,7 +43,13 @@ starches = ['ciabatta', 'french bread', 'whole wheat bread', 'sourdough', 'rye b
 sauces = ['sauce', 'mayo', 'mayonnaise']
 
 meat_words = ['bone', 'skin', 'blood', 'juice run', 'juices run', 'pink', 'meat', 'cavity', 'thigh', 'breast', 'fish']
-
+lactose_milks = ['milk', 'goat\'s milk', 'buffalo milk', 'cow\'s milk', 'fresh sour milk', 'kefir', 'skyr', 'buttermilk', 'condensed milk', 'evaporated milk', 'lactose', 'milk byproduct', 'milk casein', 'milk powder', 'milk sugar', 'powdered milk', 'whey', 'whey protein concentrate']
+lactose_creams =  ['heavy cream', 'cream', 'ice cream', 'sour cream', 'whipped cream', 'yogurt', 'yoghurt', 'curd']
+lactose_cheeses = ['cream cheese', 'cottage cheese', 'mozzarella cheese', 'ricotta cheese', 'cheese']
+avoid_butters = ['peanut butter', 'sun butter', 'almond butter', 'nut butter']
+milk_alternates = ['soy milk', 'rice milk', 'almond milk', 'coconut milk', 'cashew milk', 'oat milk', 'hazelnut milk']
+cream_alternates = ['soy cream', 'cashew cream', 'pureed tofu', 'pureed beans', 'olive oil']
+cheese_alternates = ['kite hill ricotta', 'soy cheese', 'cashew cheese', 'zucchini cheese','daiya cheese', 'tahini spread']
 ingredients_list = {
 	'cooking_medium': cooking_mediums,
 	'protein': proteins,

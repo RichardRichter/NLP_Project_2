@@ -291,6 +291,7 @@ class Recipe:
 		self.steps = [s for s in self.steps if s.new_text != '']
 		return cleaned
 
+	# Ingredient Parser
 	def get_ingredients(self):
 
 		# Getting all span texts with ingredients-item-name
@@ -322,17 +323,48 @@ class Recipe:
 				string = string.replace('to taste', 'to|taste')
 
 			# Parsing out descriptors in parentheses
-			parens = re.search(r'(\(.*\))', string)
+			parens = re.search(r'(\([^)]*\))', string)
 			if parens:
 				for paren in parens.groups():
 					ingredient['descriptors'].append(paren[1:-1])
 					string = string.replace(paren, '')
 					string = string.replace('  ', ' ')
 
+			# Determining a 'split word'
+			split_word = ''
+			for word in string.split():
+				if word in data.all_ingredients:
+					split_word = word
+					break
+
+			# Removing commas before the split word
+			if split_word:
+				string = string.split(split_word)
+
+				# Decomposing into before and after components for processing
+				before = string[0].replace(',', ' ') + split_word
+				after = ' '.join(string[1:]).replace('  ', ' ')
+
+				# Getting 'in x' as a prep step after the split
+				if ' in ' in after:
+					after = after.split(' in ')
+					after_before = after[0]
+					after_after = ' '.join(['in'] + after[1:])
+					ingredient['prep'].append(after_after)
+					after = after_before
+
+				# Rebuilding string
+				string = ' '.join([before, after])
+
 			# Determining if the ingredient has 'prep steps'
 			string = string.split(',')
 			if len(string) > 1:
-				ingredient['prep'] = [string[1].strip()]
+				ingredient['prep'] = [' '.join(string[1:]).strip()]
+
+			string = string[0]
+			string = string.split(' - ')
+			if len(string) > 1:
+				ingredient['prep'] = [' '.join(string[1:]).strip()]
 
 			# Determining if the ingredient has an explicit quantity
 			string = string[0].split()
@@ -340,8 +372,16 @@ class Recipe:
 			for i, word in enumerate(string):
 
 				# Catching more preparatory steps
-				if word.endswith('ed'):
-					ingredient['prep'].append(word)
+				if word.endswith('ed') and word != 'red':
+					if i > 0 and string[i-1] is not None and string[i-1].endswith('ly'):
+						ingredient['prep'].append(f'{string[i-1]} {word}')
+						string[i-1] = None
+					else:
+						ingredient['prep'].append(word)
+					string[i] = None
+
+				if word.endswith('less'):
+					ingredient['descriptors'].append(word)
 					string[i] = None
 
 				# Replacing 'A and a' with 1

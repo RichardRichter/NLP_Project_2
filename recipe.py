@@ -929,6 +929,68 @@ class Recipe:
 					for step in data.mexican_elote_steps:
 						self.steps.append(str(step))
 
+	def toLactose(self):
+		milk_count = 0
+		cream_count = 0
+		cheese_count = 0
+		list_of_altered_ingredients = []
+		for i, ing in enumerate(self.ingredients):
+			for milk in data.lactose_milks:
+				if milk in self.ingredients[i]['name']:
+					if milk_count < len(data.milk_alternates):
+						old_name = self.ingredients[i]['name']
+						self.ingredients[i]['name'] = data.milk_alternates[milk_count]
+						new_change = "Changed " + old_name + " to " + self.ingredients[i]['name'] + " to reduce lactose"
+						self.changes.append(new_change)
+						milk_count += 1
+						list_of_altered_ingredients.append(tuple((old_name, self.ingredients[i]['name'])))
+			for cream in data.lactose_creams:
+				if cream in self.ingredients[i]['name']:
+					if cream_count < len(data.cream_alternates):
+						old_name = self.ingredients[i]['name']
+						self.ingredients[i]['name'] = data.cream_alternates[cream_count]
+						new_change = "Changed " + old_name + " to " + self.ingredients[i]['name'] + " to reduce lactose"
+						self.changes.append(new_change)
+						cream_count += 1
+						list_of_altered_ingredients.append(tuple((old_name, self.ingredients[i]['name'])))
+			for cheese in data.lactose_cheeses:
+				if cheese in self.ingredients[i]['name']:
+					if cheese_count < len(data.cheese_alternates):
+						old_name = self.ingredients[i]['name']
+						self.ingredients[i]['name'] = data.cheese_alternates[cheese_count]
+						new_change = "Changed " + old_name + " to " + self.ingredients[i]['name'] + " to reduce lactose"
+						self.changes.append(new_change)
+						cream_count += 1
+						list_of_altered_ingredients.append(tuple((old_name, self.ingredients[i]['name'])))
+			if 'butter' in self.ingredients[i]['name']:
+				if self.ingredients[i]['name'] not in data.avoid_butters:
+					old_name = self.ingredients[i]['name']
+					self.ingredients[i]['name'] = 'clarified butter'
+					new_change = "Changed Butter Product to Clarified Butter, which has less lactose"
+					self.changes.append(new_change)
+					list_of_altered_ingredients.append(tuple((old_name, self.ingredients[i]['name'])))
+			if list_of_altered_ingredients == 0:
+				print("NO Lactose was found")
+			else:
+				for alter in list_of_altered_ingredients:
+					(old_name, new_name) = alter
+					for x in range(0, len(self.steps)):
+						space_checker = " " + old_name.lower()
+						if space_checker in self.steps[x].text.lower():
+							self.steps[x].new_text = self.steps[x].new_text.lower().replace(str(old_name), str(new_name).upper())
+						#else:
+						#	old_name_split = old_name.split()
+						#	for name in old_name_split:
+						#		space_checker = " " + name
+						#		if space_checker in self.steps[x].text.lower():
+						#			self.steps[x].new_text = self.steps[x].new_text.lower().replace(str(name), str(new_name).upper())
+						variable = str(new_name).upper()
+						re1 = r'(' + variable + r' )' + r'\1+'
+						self.steps[x].new_text = re.sub(re1, r'\1', self.steps[x].new_text)
+						self.steps[x].new_text = self.steps[x].new_text.replace(str(new_name).upper(), str(new_name))
+						variable = str(new_name)
+						re2 = r'(' + variable + r' )' + r'\1+'
+						self.steps[x].new_text = re.sub(re2, r'\1', self.steps[x].new_text)
 	# Returns a step graph
 	def get_steps(self):
 		steps = [div.text for div in self.soup.find_all('div', {'class': 'paragraph'})]

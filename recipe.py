@@ -1040,7 +1040,7 @@ class Recipe:
 			substeps += [x.strip() for x in step.split('.')]
 
 		steps = [self.Step(x) for x in substeps]
-		# steps = [s for s in steps if s.valid]
+		steps = [s for s in steps if len(s.text) > 0]
 
 		return steps
 

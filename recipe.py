@@ -47,9 +47,9 @@ class Recipe:
 			actions, ingredients, tools = self.from_data()
 			actions, ingredients, tools = self.query(actions, ingredients, tools)
 
-			valid = True if (actions and (ingredients or tools)) else False
+			# valid = True if (actions and (ingredients or tools)) else False
 
-			return actions, ingredients, tools, valid
+			return actions, ingredients, tools, True
 
 		# Grabbing potential data from hardcoded lists
 		def from_data(self):
@@ -158,6 +158,10 @@ class Recipe:
 		self.ingredients, self.unknown, self.ingredient_indices = self.get_ingredients()
 		self.text = [div.text for div in self.soup.find_all('div', {'class': 'paragraph'})]
 		self.steps = self.get_steps()
+		for i, step in enumerate(self.steps):
+			for ing in self.ingredient_indices:
+				if ing in step.text and ing not in step.ingredients:
+					self.steps[i].ingredients.append(ing)
 		self.tools = self.named_tools()
 		self.potential_main_actions = self.pmActions()
 		self.main_actions = self.mActions()
@@ -934,7 +938,7 @@ class Recipe:
 			substeps += [x.strip() for x in step.split('.')]
 
 		steps = [self.Step(x) for x in substeps]
-		steps = [s for s in steps if s.valid]
+		# steps = [s for s in steps if s.valid]
 
 		return steps
 
@@ -1040,21 +1044,24 @@ def main():
 		recipe = Recipe(url)
 		recipe.output_tools_and_actions()
 		recipe.output_recipe()
-		transformation_choices = [str(i) for i in range(0, 9)]
+		transformation_choices = [str(i) for i in range(1, 9)]
 		menu_options = "Select Desired Transformation:\n0: Print Parsed Ingredients and Steps from Original Recipe\n1: Make recipe vegetarian\n2: Make recipe non-vegetarian\n" \
 					   "3: Make recipe more healthy\n4: Make recipe less healthy\n" \
 					   "5: Make recipe Mexican\n6: Double quantity of recipe\n7: Half quantity of recipe\n8: Quit"
 		print(menu_options)
 		choice = input()
 		while choice not in transformation_choices:
-			print("This is an invalid transformation choice. Please choose again.")
-			print(menu_options)
-			choice = input()
+			if choice == '0':
+				recipe.parsed_ing_and_steps()
+				print(menu_options)
+				choice = input()
+			else:
+				print("This is an invalid transformation choice. Please choose again.")
+				print(menu_options)
+				choice = input()
 		print()
 		selected_choice = int(choice)
-		if selected_choice == 0:
-			recipe.parsed_ing_and_steps()
-		elif selected_choice == 1:
+		if selected_choice == 1:
 			recipe.to_vegetarian()
 		elif selected_choice == 2:
 			recipe.from_vegetarian()
@@ -1074,7 +1081,7 @@ def main():
 		recipe.output_recipe()
 		print("Changes made to original recipe:")
 		for i, change in enumerate(recipe.changes):
-			print(str(i+1) + '. ' + change)
+			print(str(i + 1) + '. ' + change)
 
 		print()
 		print("Please press 1 if you have a new recipe you would like to transform")

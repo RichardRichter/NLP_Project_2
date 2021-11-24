@@ -12,9 +12,6 @@ import copy
 # Loading spacy
 nlp = spacy.load("en_core_web_sm")
 
-# Query and Generation pipelines
-query = pipeline('question-answering')
-
 
 # Class representing a recipe
 class Recipe:
@@ -26,16 +23,16 @@ class Recipe:
 				self.text = ''
 				self.actions, self.ingredients, self.tools = [], [], []
 				self.new_text = ''
-				self.conditions = None
+				self.time = None
 			else:
 				self.text = ' '.join([self.convert_fraction(x) for x in sentence.split()])
 				self.tokens = nlp(sentence)
 				self.actions, self.ingredients, self.tools, self.valid = self.get_info()
 				self.new_text = ' '.join([self.convert_fraction(x) for x in sentence.split()])
-				self.conditions = None
+				self.time = self.get_time()
 
 		def __str__(self):
-			return f'({self.actions} the {self.ingredients} using {self.tools})'
+			return f'(Actions: {self.actions} | Ingredients: {self.ingredients} | Tools: {self.tools} | Time: {self.time})'
 
 		def __repr__(self):
 			return str(self)
@@ -45,11 +42,11 @@ class Recipe:
 
 			# Getting items from data, then querying for missing items
 			actions, ingredients, tools = self.from_data()
-			actions, ingredients, tools = self.query(actions, ingredients, tools)
+			#actions, ingredients, tools = self.query(actions, ingredients, tools)
 
-			# valid = True if (actions and (ingredients or tools)) else False
+			valid = True if (actions and (ingredients or tools)) else False
 
-			return actions, ingredients, tools, True
+			return actions, ingredients, tools, valid
 
 		# Grabbing potential data from hardcoded lists
 		def from_data(self):
@@ -146,6 +143,23 @@ class Recipe:
 					return True
 			except ValueError:
 				return False
+
+		# Returns the time component of the step, or unknown
+		def get_time(self):
+
+			seconds = re.compile(r'[1-9]+[0-9]* [sS]econds?')
+			minutes = re.compile(r'[1-9]+[0-9]* [mM]inutes?')
+			hours = re.compile(r'[1-9]+[0-9]* [hH]ours?')
+
+			for time_pattern in [seconds, minutes, hours]:
+				match = time_pattern.search(self.text)
+				if match:
+					start = match.span()[0]
+					end = match.span()[1]
+					
+					return self.text[start:end]
+
+			return 'None Specified'
 
 	def __init__(self, url):
 		html_doc = request.urlopen(url)
@@ -323,7 +337,7 @@ class Recipe:
 				string = string.replace('to taste', 'to|taste')
 
 			# Parsing out descriptors in parentheses
-			parens = re.search(r'(\([^)]*\))', string)
+			parens = re.search(r'(\([^\)]+\))', string)
 			if parens:
 				for paren in parens.groups():
 					ingredient['descriptors'].append(paren[1:-1])
@@ -373,7 +387,7 @@ class Recipe:
 
 				# Catching more preparatory steps
 				if word.endswith('ed') and word != 'red':
-					if i > 0 and string[i-1] is not None and string[i-1].endswith('ly'):
+					if i > 0 and isinstance(string[i-1], str) and string[i-1].endswith('ly'):
 						ingredient['prep'].append(f'{string[i-1]} {word}')
 						string[i-1] = None
 					else:
@@ -974,6 +988,7 @@ class Recipe:
 		cream_count = 0
 		cheese_count = 0
 		list_of_altered_ingredients = []
+
 		for i, ing in enumerate(self.ingredients):
 			for milk in data.lactose_milks:
 				if milk in self.ingredients[i]['name']:
@@ -984,6 +999,7 @@ class Recipe:
 						self.changes.append(new_change)
 						milk_count += 1
 						list_of_altered_ingredients.append(tuple((old_name, self.ingredients[i]['name'])))
+
 			for cream in data.lactose_creams:
 				if cream in self.ingredients[i]['name']:
 					if cream_count < len(data.cream_alternates):
@@ -993,6 +1009,7 @@ class Recipe:
 						self.changes.append(new_change)
 						cream_count += 1
 						list_of_altered_ingredients.append(tuple((old_name, self.ingredients[i]['name'])))
+
 			for cheese in data.lactose_cheeses:
 				if cheese in self.ingredients[i]['name']:
 					if cheese_count < len(data.cheese_alternates):
@@ -1002,6 +1019,7 @@ class Recipe:
 						self.changes.append(new_change)
 						cream_count += 1
 						list_of_altered_ingredients.append(tuple((old_name, self.ingredients[i]['name'])))
+
 			if 'butter' in self.ingredients[i]['name']:
 				dont_convert = False
 				for butter in data.avoid_butters:
@@ -1014,28 +1032,29 @@ class Recipe:
 						new_change = "Changed Butter Product to Clarified Butter, which has less lactose"
 						self.changes.append(new_change)
 						list_of_altered_ingredients.append(tuple((old_name, self.ingredients[i]['name'])))
-			if list_of_altered_ingredients == 0:
-				print("NO Lactose was found")
-			else:
-				for alter in list_of_altered_ingredients:
-					(old_name, new_name) = alter
-					for x in range(0, len(self.steps)):
-						space_checker = " " + old_name.lower()
-						if space_checker in self.steps[x].text.lower():
-							self.steps[x].new_text = self.steps[x].new_text.lower().replace(str(old_name), str(new_name).upper())
-						#else:
-						#	old_name_split = old_name.split()
-						#	for name in old_name_split:
-						#		space_checker = " " + name
-						#		if space_checker in self.steps[x].text.lower():
-						#			self.steps[x].new_text = self.steps[x].new_text.lower().replace(str(name), str(new_name).upper())
-						variable = str(new_name).upper()
-						re1 = r'(' + variable + r' )' + r'\1+'
-						self.steps[x].new_text = re.sub(re1, r'\1', self.steps[x].new_text)
-						self.steps[x].new_text = self.steps[x].new_text.replace(str(new_name).upper(), str(new_name))
-						variable = str(new_name)
-						re2 = r'(' + variable + r' )' + r'\1+'
-						self.steps[x].new_text = re.sub(re2, r'\1', self.steps[x].new_text)
+		if list_of_altered_ingredients == 0:
+			print("NO Lactose was found")
+		else:
+			for alter in list_of_altered_ingredients:
+				(old_name, new_name) = alter
+				for x in range(0, len(self.steps)):
+					space_checker = " " + old_name.lower()
+					if space_checker in self.steps[x].text.lower():
+						new_string = self.steps[x].new_text.lower().replace(str(old_name), str(new_name).upper())
+						self.steps[x].new_text = new_string
+					#else:
+					#	old_name_split = old_name.split()
+					#	for name in old_name_split:
+					#		space_checker = " " + name
+					#		if space_checker in self.steps[x].text.lower():
+					#			self.steps[x].new_text = self.steps[x].new_text.lower().replace(str(name), str(new_name).upper())
+					variable = str(new_name).upper()
+					re1 = r'(' + variable + r' )' + r'\1+'
+					self.steps[x].new_text = re.sub(re1, r'\1', self.steps[x].new_text)
+					self.steps[x].new_text = self.steps[x].new_text.replace(str(new_name).upper(), str(new_name))
+					variable = str(new_name)
+					re2 = r'(' + variable + r' )' + r'\1+'
+					self.steps[x].new_text = re.sub(re2, r'\1', self.steps[x].new_text)
 
 	# Returns a step graph
 	def get_steps(self):
@@ -1144,10 +1163,10 @@ def main():
 	still_interested = True
 	while still_interested == True:
 		print("Please input the url for the allrecipes recipe to parse:")
-		url = input()
+		url = input('Recipe: ')
 		while 'allrecipes.com/recipe/' not in url:
 			print("This doesn't seem to be an allrecipes.com url. Try again.")
-			url = input()
+			url = input('Recipe: ')
 
 		recipe = Recipe(url)
 		recipe.output_tools_and_actions()
@@ -1157,16 +1176,16 @@ def main():
 					   "3: Make recipe more healthy\n4: Make recipe less healthy\n" \
 					   "5: Make recipe Mexican\n6: Double quantity of recipe\n7: Half quantity of recipe\n8: Get Lactose Free\n9: Quit"
 		print(menu_options)
-		choice = input()
+		choice = input('Your Choice: ')
 		while choice not in transformation_choices:
 			if choice == '0':
 				recipe.parsed_ing_and_steps()
 				print(menu_options)
-				choice = input()
+				choice = input('Your Choice: ')
 			else:
 				print("This is an invalid transformation choice. Please choose again.")
 				print(menu_options)
-				choice = input()
+				choice = input('Your Choice: ')
 		print()
 		selected_choice = int(choice)
 		if selected_choice == 1:
@@ -1193,32 +1212,15 @@ def main():
 		for i, change in enumerate(recipe.changes):
 			print(str(i + 1) + '. ' + change)
 
-		print()
-		print("Please press 1 if you have a new recipe you would like to transform")
-		print("Press any other number button to end your journey")
-		continue_choice = input()
+
+		print("\nSelect an Option:")
+		print("1: Make more transformations with a different recipe")
+		print("Anything else: Terminate the program")
+		continue_choice = input('Your Choice: ')
 		if continue_choice != str(1):
-			print("Okay the process is over")
+			print("Terminating Program.")
 			still_interested = False
 
 
 if __name__ == '__main__':
 	main()
-	# Some valid recipes
-	# urls = [9023, 259356, 20002, 237496, 16318, 228285, 24712, 54492, 218628, 19283]
-	#
-	# # Printing vegetarian conversions
-	# for url in urls[1:2]:
-	# 	recipe = Recipe(get_recipe_url(url))
-	# 	# print(recipe.vegetarian())
-	# 	print(recipe.text)
-	# 	recipe.output_ingredients()
-	# 	recipe.output_steps()
-	#
-	#
-	# 	recipe.to_vegetarian()
-	# 	# print(recipe.recipe_name)
-	# 	recipe.output_ingredients()
-	# 	# for steps in recipe.steps:
-	# 	# 	print(steps.new_text)
-	# 	print(recipe.changes)

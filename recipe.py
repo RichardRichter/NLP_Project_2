@@ -1152,10 +1152,10 @@ def main():
 		recipe = Recipe(url)
 		recipe.output_tools_and_actions()
 		recipe.output_recipe()
-		transformation_choices = [str(i) for i in range(1, 9)]
+		transformation_choices = [str(i) for i in range(1, 10)]
 		menu_options = "Select Desired Transformation:\n0: Print Parsed Ingredients and Steps from Original Recipe\n1: Make recipe vegetarian\n2: Make recipe non-vegetarian\n" \
 					   "3: Make recipe more healthy\n4: Make recipe less healthy\n" \
-					   "5: Make recipe Mexican\n6: Double quantity of recipe\n7: Half quantity of recipe\n8: Quit"
+					   "5: Make recipe Mexican\n6: Double quantity of recipe\n7: Half quantity of recipe\n8: Get Lactose Free\n9: Quit"
 		print(menu_options)
 		choice = input()
 		while choice not in transformation_choices:
@@ -1184,6 +1184,8 @@ def main():
 		elif selected_choice == 7:
 			recipe.toHalf()
 		elif selected_choice == 8:
+			recipe.toLactose()
+		elif selected_choice == 9:
 			return
 
 		recipe.output_recipe()
